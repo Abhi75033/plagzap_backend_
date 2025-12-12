@@ -12,20 +12,38 @@ function getGenAI() {
     return genAI;
 }
 
+// Helper for formatted logging
+const logStage = (stage, message, data = null) => {
+    const timestamp = new Date().toLocaleTimeString();
+    console.log(`[${timestamp}] ${stage} ${message}`);
+    if (data) {
+        if (typeof data === 'object') {
+            console.log(JSON.stringify(data, null, 2));
+        } else {
+            console.log(`   └─ ${data}`);
+        }
+    }
+};
+
 // --- STAGE 1: PREPROCESS ---
 function preprocessText(text) {
-    console.log("➡️ [Stage 1] Preprocess (AI Markers, Normalization)...");
+    logStage("➡️ [Stage 1]", "Preprocess (AI Markers, Normalization)...");
+    logStage("   ℹ️", `Input Length: ${text.length} chars`);
+
     let processed = text
         .replace(/["']/g, '"')
         .replace(/\*\*.*?\*\*/g, "")
         .replace(/###/g, "")
         .replace(/([.!?])\s+(?=[A-Z])/g, "$1\n");
-    return processed.trim();
+
+    const result = processed.trim();
+    logStage("   ✅", `Preprocess Complete. New Length: ${result.length} chars`);
+    return result;
 }
 
 // --- STAGE 2: GEMINI CHAOS START (Break Consistency) ---
 async function runGeminiSoften(text) {
-    console.log("➡️ [Stage 2] Gemini 2.0 Flash → Chaos Mode (Entropy Injection)...");
+    logStage("➡️ [Stage 2]", "Gemini 2.0 Flash → Chaos Mode (Entropy Injection)...");
 
     const prompt = `
     ROLE: "The Lazy Texter".
@@ -47,12 +65,14 @@ async function runGeminiSoften(text) {
     `;
 
     // High temperature for unpredictability
-    return runGeminiRewrite(text, prompt, 1.3);
+    const result = await runGeminiRewrite(text, prompt, 1.3);
+    logStage("   ✅", "Chaos Mode Complete");
+    return result;
 }
 
 // --- STAGE 3: GEMINI PRO REWRITE (The Destroyer) ---
 async function runDeepRewrite(text, customPrompt = null) {
-    console.log("➡️ [Stage 3] Gemini 2.0 Flash → Deep Rewrite (Chaos Mode)...");
+    logStage("➡️ [Stage 3]", "Gemini 2.0 Flash → Deep Rewrite (Chaos Mode)...");
 
     const defaultPrompt = `
     ROLE: Tired Human Writer.
@@ -78,12 +98,14 @@ async function runDeepRewrite(text, customPrompt = null) {
     const finalPrompt = customPrompt || defaultPrompt;
 
     // MAXIMUM ENTROPY TEMPERATURE
-    return runGeminiRewrite(text, finalPrompt, 1.6);
+    const result = await runGeminiRewrite(text, finalPrompt, 1.6);
+    logStage("   ✅", "Deep Rewrite Complete");
+    return result;
 }
 
 // --- REWRITE FLAGGED SENTENCES (Gemini Aggressive) ---
 async function rewriteSpecificFlaggedParts(text, reason = "AI Detection") {
-    console.log(`➡️ [Loop] 🔥 Gemini → Aggressive (Chaos Level MAX)...`);
+    logStage("➡️ [Loop]", `🔥 Gemini → Aggressive Rewrite (Reason: ${reason})...`);
 
     const aggressivePrompt = `
     ROLE: Anti-AI Saboteur.
@@ -108,10 +130,11 @@ async function rewriteSpecificFlaggedParts(text, reason = "AI Detection") {
 async function runGeminiRewrite(text, promptText, temp = 0.9) {
     const gen = getGenAI();
     if (!gen) {
-        console.error("❌ Gemini API Key missing.");
+        logStage("❌", "Gemini API Key missing.");
         return text;
     }
     try {
+        const startTime = Date.now();
         const model = gen.getGenerativeModel({
             model: "gemini-2.0-flash", // Using the fast, new model
             generationConfig: {
@@ -125,26 +148,29 @@ async function runGeminiRewrite(text, promptText, temp = 0.9) {
         const result = await model.generateContent(fullPrompt);
 
         const rawText = result.response.text().trim();
+        const duration = Date.now() - startTime;
+
+        logStage("   ⚡", `Gemini Generation took ${duration}ms`);
 
         // Parse JSON output
         try {
             const parsed = JSON.parse(rawText);
             return parsed.rewritten_text || rawText; // Fallback if key missing
         } catch (parseError) {
-            console.warn("⚠️ JSON Parse Failed, returning raw text:", parseError.message);
+            logStage("   ⚠️", "JSON Parse Failed, returning raw text", parseError.message);
             // Fallback cleanup if JSON fails (rare with responseMimeType)
             return rawText.replace(/```json|```/g, "").trim();
         }
 
     } catch (e) {
-        console.error("⚠️ Gemini Rewrite Failed:", e.message);
+        logStage("   ❌", "Gemini Rewrite Failed", e.message);
         return text;
     }
 }
 
 // --- STAGE 4: POST-PROCESS ---
 function postProcess(text) {
-    console.log("➡️ [Stage 4] Post-process (Cleaning)...");
+    logStage("➡️ [Stage 4]", "Post-process (Cleaning)...");
 
     let cleanText = text;
 
@@ -152,12 +178,17 @@ function postProcess(text) {
     cleanText = cleanText.replace(/[*_]/g, '');
 
     // 2. Ensure clean spacing
-    return cleanText.replace(/\s+/g, ' ').trim();
+    const finalResult = cleanText.replace(/\s+/g, ' ').trim();
+
+    logStage("   ✅", "Post-processing complete");
+    return finalResult;
 }
 
 // --- MAIN PIPELINE CONTROLLER ---
 const rewriteText = async (initialText) => {
-    console.log('\n🚀 STARTING PIPELINE (Gemini-Only Humanization)');
+    logStage("\n🚀 STARTING PIPELINE", "(Gemini-Only Humanization)");
+    logStage("ℹ️", `Initial Length: ${initialText.length} chars`);
+
     let currentText = initialText;
 
     try {
@@ -175,19 +206,19 @@ const rewriteText = async (initialText) => {
         const MAX_ATTEMPTS = 3; // Reduced slightly for speed since we trust Gemini more now
 
         while (attempts < MAX_ATTEMPTS) {
-            console.log(`🔄 [Loop] AI Score Check (Attempt ${attempts + 1}/${MAX_ATTEMPTS})...`);
+            logStage(`🔄 [Loop]`, `AI Score Check (Attempt ${attempts + 1}/${MAX_ATTEMPTS})...`);
 
             const detectionResult = await detectAI(currentText);
             const score = detectionResult.score;
-            console.log(`   📊 Current AI Score: ${score}%`);
+            logStage("   📊", `Current AI Score: ${score}%`);
 
             // Strict < 20% rule
             if (score <= 20) {
-                console.log("   ✅ Score is safe (<20%). Exiting loop.");
+                logStage("   ✅", "Score is safe (<20%). Exiting loop.");
                 break;
             } else {
                 if (attempts < MAX_ATTEMPTS - 1) {
-                    console.log(`   ⚠️ Score > 20% (Detected). LOOPING BACK...`);
+                    logStage("   ⚠️", `Score > 20% (Detected). LOOPING BACK...`);
                     // Use higher randomness for the retry
                     currentText = await rewriteSpecificFlaggedParts(currentText, `High AI Score (${score}%)`);
                 }
@@ -198,11 +229,13 @@ const rewriteText = async (initialText) => {
         // Step 5: Post-process
         currentText = postProcess(currentText);
 
-        console.log("🏁 Final Output Ready.");
+        logStage("🏁", "Final Output Ready");
+        logStage("ℹ️", `Final Length: ${currentText.length} chars`);
+
         return currentText;
 
     } catch (error) {
-        console.error("❌ Pipeline Error:", error);
+        logStage("❌", "Pipeline Error", error);
         return initialText; // Fail safe
     }
 };
