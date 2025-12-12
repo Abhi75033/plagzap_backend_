@@ -1,0 +1,210 @@
+const { GoogleGenerativeAI } = require('@google/generative-ai');
+const { detectAI } = require('./contentDetector');
+
+// Initialize AI clients
+const genAI = process.env.GEMINI_API_KEY ? new GoogleGenerativeAI(process.env.GEMINI_API_KEY) : null;
+
+/**
+ * UTILITY: getGenAI
+ */
+function getGenAI() {
+    if (!process.env.GEMINI_API_KEY) return null;
+    return genAI;
+}
+
+// --- STAGE 1: PREPROCESS ---
+function preprocessText(text) {
+    console.log("➡️ [Stage 1] Preprocess (AI Markers, Normalization)...");
+    let processed = text
+        .replace(/["']/g, '"')
+        .replace(/\*\*.*?\*\*/g, "")
+        .replace(/###/g, "")
+        .replace(/([.!?])\s+(?=[A-Z])/g, "$1\n");
+    return processed.trim();
+}
+
+// --- STAGE 2: GEMINI CHAOS START (Break Consistency) ---
+async function runGeminiSoften(text) {
+    console.log("➡️ [Stage 2] Gemini 2.0 Flash → Chaos Mode (Entropy Injection)...");
+
+    const prompt = `
+    ROLE: "The Lazy Texter".
+    TASK: Rewrite this text. Do NOT try to be smart. Do NOT try to be professional.
+
+    STRATEGY (MAX CHAOS):
+    1.  **Dumb Down**: Use the simplest words possible. Ban 4-syllable words.
+        -   Instead of "utilize", use "use".
+        -   Instead of "however", use "but".
+    2.  **Lazy Grammar**: It is okay to have run-on sentences. It is okay to skip a comma. Make it look like a human typed it fast.
+    3.  **Variable Flow**: Write one huge sentence. Then a tiny one. Disconnect thoughts slightly.
+    4.  **No AI polish**: If it looks perfect, it is wrong. Make it look "rough".
+
+    STRICT OUTPUT FORMAT:
+    Return valid JSON only: { "rewritten_text": "YOUR REWRITTEN TEXT HERE" }
+
+    TEXT:
+    "${text}"
+    `;
+
+    // High temperature for unpredictability
+    return runGeminiRewrite(text, prompt, 1.3);
+}
+
+// --- STAGE 3: GEMINI PRO REWRITE (The Destroyer) ---
+async function runDeepRewrite(text, customPrompt = null) {
+    console.log("➡️ [Stage 3] Gemini 2.0 Flash → Deep Rewrite (Chaos Mode)...");
+
+    const defaultPrompt = `
+    ROLE: Tired Human Writer.
+    TASK: Rewrite this text so it passes as a human draft.
+
+    RULES FOR BYPASSING DETECTION:
+    1.  **High Perplexity**: Be unpredictable. Jump between ideas abruptly.
+    2.  **Imperfect Grammar**:
+        -   Start sentences with lowercase letters occasionally if it fits the "vibe".
+        -   Use fragments. "Seriously." "Just like that."
+    3.  **Vocabulary Ban**:
+        -   NEVER use: "Furthermore", "Thus", "Therefore", "In conclusion", "Crucially".
+        -   NEVER use complex metaphors "Tapestry", "Landscape".
+    4.  **Voice**: Sound bored or opinionated. "Honestly, I think..." or "Whatever, point is..."
+
+    STRICT OUTPUT FORMAT:
+    Return valid JSON only: { "rewritten_text": "YOUR REWRITTEN TEXT HERE" }
+
+    INPUT TEXT:
+    "${text}"
+    `;
+
+    const finalPrompt = customPrompt || defaultPrompt;
+
+    // MAXIMUM ENTROPY TEMPERATURE
+    return runGeminiRewrite(text, finalPrompt, 1.6);
+}
+
+// --- REWRITE FLAGGED SENTENCES (Gemini Aggressive) ---
+async function rewriteSpecificFlaggedParts(text, reason = "AI Detection") {
+    console.log(`➡️ [Loop] 🔥 Gemini → Aggressive (Chaos Level MAX)...`);
+
+    const aggressivePrompt = `
+    ROLE: Anti-AI Saboteur.
+    TASK: The text was flagged. Ruin the "AI Structure".
+
+    STRATEGY:
+    1.  **Delete & Simplfy**: Cut 30% of the words. Be blunt.
+    2.  **Add Noise**: Add a random personal opinion. "I hate when that happens."
+    3.  **Break Syntax**: Use a dash - or just stop a sentence mid-thought and start another.
+
+    STRICT OUTPUT FORMAT:
+    Return valid JSON only: { "rewritten_text": "YOUR REWRITTEN TEXT HERE" }
+
+    CONTEXT:
+    "${text}"
+    `;
+
+    return runGeminiRewrite(text, aggressivePrompt, 1.7);
+}
+
+// Helper generic Gemini
+async function runGeminiRewrite(text, promptText, temp = 0.9) {
+    const gen = getGenAI();
+    if (!gen) {
+        console.error("❌ Gemini API Key missing.");
+        return text;
+    }
+    try {
+        const model = gen.getGenerativeModel({
+            model: "gemini-2.0-flash", // Using the fast, new model
+            generationConfig: {
+                temperature: temp,
+                topP: 0.95,
+                topK: 40,
+                responseMimeType: "application/json" // Force JSON
+            }
+        });
+        const fullPrompt = `${promptText}\n\nTEXT TO REWRITE:\n"${text}"`;
+        const result = await model.generateContent(fullPrompt);
+
+        const rawText = result.response.text().trim();
+
+        // Parse JSON output
+        try {
+            const parsed = JSON.parse(rawText);
+            return parsed.rewritten_text || rawText; // Fallback if key missing
+        } catch (parseError) {
+            console.warn("⚠️ JSON Parse Failed, returning raw text:", parseError.message);
+            // Fallback cleanup if JSON fails (rare with responseMimeType)
+            return rawText.replace(/```json|```/g, "").trim();
+        }
+
+    } catch (e) {
+        console.error("⚠️ Gemini Rewrite Failed:", e.message);
+        return text;
+    }
+}
+
+// --- STAGE 4: POST-PROCESS ---
+function postProcess(text) {
+    console.log("➡️ [Stage 4] Post-process (Cleaning)...");
+
+    let cleanText = text;
+
+    // 1. Remove Markdown (*bold*, _italic_)
+    cleanText = cleanText.replace(/[*_]/g, '');
+
+    // 2. Ensure clean spacing
+    return cleanText.replace(/\s+/g, ' ').trim();
+}
+
+// --- MAIN PIPELINE CONTROLLER ---
+const rewriteText = async (initialText) => {
+    console.log('\n🚀 STARTING PIPELINE (Gemini-Only Humanization)');
+    let currentText = initialText;
+
+    try {
+        // Step 1: Preprocess
+        currentText = preprocessText(currentText);
+
+        // Step 2: Humanize (Soften)
+        currentText = await runGeminiSoften(currentText);
+
+        // Step 3: Deep Rewrite (Casual/Personality)
+        currentText = await runDeepRewrite(currentText);
+
+        // Step 4: AI Score Loop
+        let attempts = 0;
+        const MAX_ATTEMPTS = 3; // Reduced slightly for speed since we trust Gemini more now
+
+        while (attempts < MAX_ATTEMPTS) {
+            console.log(`🔄 [Loop] AI Score Check (Attempt ${attempts + 1}/${MAX_ATTEMPTS})...`);
+
+            const detectionResult = await detectAI(currentText);
+            const score = detectionResult.score;
+            console.log(`   📊 Current AI Score: ${score}%`);
+
+            // Strict < 20% rule
+            if (score <= 20) {
+                console.log("   ✅ Score is safe (<20%). Exiting loop.");
+                break;
+            } else {
+                if (attempts < MAX_ATTEMPTS - 1) {
+                    console.log(`   ⚠️ Score > 20% (Detected). LOOPING BACK...`);
+                    // Use higher randomness for the retry
+                    currentText = await rewriteSpecificFlaggedParts(currentText, `High AI Score (${score}%)`);
+                }
+                attempts++;
+            }
+        }
+
+        // Step 5: Post-process
+        currentText = postProcess(currentText);
+
+        console.log("🏁 Final Output Ready.");
+        return currentText;
+
+    } catch (error) {
+        console.error("❌ Pipeline Error:", error);
+        return initialText; // Fail safe
+    }
+};
+
+module.exports = { rewriteText };
