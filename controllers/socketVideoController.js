@@ -49,13 +49,25 @@ module.exports = (io) => {
                     return socket.emit('error', { message: 'Meeting not found' });
                 }
 
+                // Check if meeting has ended
+                if (meeting.status === 'ended') {
+                    return socket.emit('meeting-ended', {
+                        message: 'This meeting has ended. The host has left.'
+                    });
+                }
+
                 if (meeting.expiresAt < new Date() && meeting.status !== 'active') {
                     return socket.emit('error', { message: 'Meeting has expired' });
                 }
 
+                // Check if user is the host (with null checks)
+                const isHost = meeting.host && socket.userId &&
+                    meeting.host.toString() === socket.userId.toString();
+
                 // Join socket room
                 socket.join(meetingCode);
                 socket.currentMeeting = meetingCode;
+                socket.isHost = isHost;
 
                 // Add to meeting map
                 if (!meetings.has(meetingCode)) {
@@ -66,6 +78,7 @@ module.exports = (io) => {
                     socketId: socket.id,
                     userId: socket.userId,
                     userName: socket.userName,
+                    isHost,
                     audioEnabled: true,
                     videoEnabled: true,
                     screenSharing: false,
@@ -82,6 +95,7 @@ module.exports = (io) => {
                         socketId: p.socketId,
                         userId: p.userId,
                         userName: p.userName,
+                        isHost: p.isHost || false,
                         audioEnabled: p.audioEnabled,
                         videoEnabled: p.videoEnabled,
                         screenSharing: p.screenSharing,
@@ -94,6 +108,7 @@ module.exports = (io) => {
                     socketId: socket.id,
                     userId: socket.userId,
                     userName: socket.userName,
+                    isHost,
                     audioEnabled: true,
                     videoEnabled: true
                 });
@@ -104,7 +119,7 @@ module.exports = (io) => {
                     await meeting.save();
                 }
 
-                console.log(`📹 ${socket.userName} joined meeting: ${meetingCode}`);
+                console.log(`📹 ${socket.userName} joined meeting: ${meetingCode}${isHost ? ' (HOST)' : ''}`);
             } catch (error) {
                 console.error('Error joining meeting:', error);
                 socket.emit('error', { message: 'Failed to join meeting' });
@@ -235,26 +250,47 @@ module.exports = (io) => {
         });
 
         // Helper: Handle participant leaving
-        function handleDisconnect(socket) {
+        async function handleDisconnect(socket) {
             if (socket.currentMeeting && meetings.has(socket.currentMeeting)) {
                 const meetingCode = socket.currentMeeting;
                 const meetingParticipants = meetings.get(meetingCode);
+                const isHost = socket.isHost;
 
                 meetingParticipants.delete(socket.id);
 
-                // Notify others
-                socket.to(meetingCode).emit('user-left', {
-                    socketId: socket.id,
-                    userName: socket.userName
-                });
+                try {
+                    const meeting = await Meeting.findOne({ code: meetingCode });
 
-                // Clean up empty meetings
-                if (meetingParticipants.size === 0) {
-                    meetings.delete(meetingCode);
-                    console.log(`🗑️  Meeting ${meetingCode} removed (no participants)`);
+                    if (meeting && isHost) {
+                        // Host left - end the meeting
+                        meeting.status = 'ended';
+                        await meeting.save();
+
+                        // Notify all remaining participants
+                        io.to(meetingCode).emit('host-left', {
+                            message: 'The host has ended the meeting.'
+                        });
+
+                        console.log(`👑 HOST left - Meeting ${meetingCode} ENDED`);
+                        meetings.delete(meetingCode);
+                    } else {
+                        // Regular participant left
+                        socket.to(meetingCode).emit('user-left', {
+                            socketId: socket.id,
+                            userName: socket.userName
+                        });
+
+                        // Clean up empty meetings
+                        if (meetingParticipants.size === 0) {
+                            meetings.delete(meetingCode);
+                            console.log(`🗑️  Meeting ${meetingCode} removed (no participants)`);
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error handling disconnect:', error);
                 }
 
-                console.log(`👋 ${socket.userName} left meeting: ${meetingCode}`);
+                console.log(`👋 ${socket.userName} left meeting: ${meetingCode}${isHost ? ' (WAS HOST)' : ''}`);
             }
 
             console.log(`❌ User disconnected: ${socket.userName} (${socket.id})`);

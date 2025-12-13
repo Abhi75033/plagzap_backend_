@@ -21,4 +21,7 @@ router.post('/:code/end', meetingController.endMeeting);
 // Get user's meetings
 router.get('/user/my-meetings', meetingController.getUserMeetings);
 
+// Clear user's meeting history
+router.delete('/user/clear-history', meetingController.clearMeetingHistory);
+
 module.exports = router;
