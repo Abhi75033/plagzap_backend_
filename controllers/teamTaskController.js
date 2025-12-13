@@ -56,12 +56,23 @@ exports.createTask = async (req, res) => {
             return res.status(404).json({ error: 'You are not in a team' });
         }
 
+        // Validate assignee if provided
+        let validAssignee = null;
+        if (assignee && assignee.trim()) {
+            // Check if it's a valid ObjectId format
+            const mongoose = require('mongoose');
+            if (!mongoose.Types.ObjectId.isValid(assignee)) {
+                return res.status(400).json({ error: 'Invalid assignee ID' });
+            }
+            validAssignee = assignee;
+        }
+
         const task = new TeamTask({
             teamId: team._id,
             title: title.trim(),
             description: description?.trim(),
             priority: priority || 'medium',
-            assignee: assignee || null,
+            assignee: validAssignee,
             dueDate: dueDate || null,
             labels: labels || [],
             createdBy: user._id
@@ -75,7 +86,8 @@ exports.createTask = async (req, res) => {
 
     } catch (error) {
         console.error('Create task error:', error);
-        res.status(500).json({ error: 'Failed to create task' });
+        console.error('Error details:', error.message);
+        res.status(500).json({ error: 'Failed to create task', details: error.message });
     }
 };
 
