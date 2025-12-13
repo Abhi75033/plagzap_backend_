@@ -165,18 +165,10 @@ IMPORTANT:
 Generate the complete content now:
 `;
 
-        // Call Gemini API - using gemini-1.5-flash-latest (works with v1beta)
-        const model = genAI.getGenerativeModel({
-            model: 'gemini-1.5-flash-latest',
-            generationConfig: {
-                temperature: 0.9,
-                topK: 40,
-                topP: 0.95,
-                maxOutputTokens: 2048,
-            }
-        });
+        // Call Gemini API - using compatible SDK version
+        const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
 
-        console.log('🤖 Calling Gemini API with model: gemini-1.5-flash-latest');
+        console.log('🤖 Calling Gemini API with model: gemini-pro (SDK v0.21.0)');
         const result = await model.generateContent(fullPrompt);
         const response = await result.response;
         const content = response.text();
