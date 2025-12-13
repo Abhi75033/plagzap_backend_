@@ -163,11 +163,11 @@ IMPORTANT:
 Generate the complete content now:
 `;
 
-        // Call Gemini API directly using REST API (v1 - stable)
-        console.log('🤖 Calling Gemini API via REST (v1)');
+        // Call Gemini API directly - trying v1beta with gemini-1.5-flash
+        console.log('🤖 Calling Gemini API via REST (v1beta with gemini-1.5-flash)');
 
         const response = await axios.post(
-            `https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent?key=${process.env.GEMINI_API_KEY}`,
+            `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
             {
                 contents: [{
                     parts: [{
