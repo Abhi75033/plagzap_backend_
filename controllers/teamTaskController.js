@@ -44,6 +44,13 @@ exports.createTask = async (req, res) => {
         const user = req.user;
         const { title, description, priority, assignee, dueDate, labels } = req.body;
 
+        console.log('📝 Create task request:', {
+            title,
+            assignee,
+            assigneeType: typeof assignee,
+            body: req.body
+        });
+
         if (!title || !title.trim()) {
             return res.status(400).json({ error: 'Title is required' });
         }
