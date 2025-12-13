@@ -119,4 +119,12 @@ router.post('/dictionary/lookup', authMiddleware, dictionaryController.lookupDic
 const contentController = require('../controllers/contentController');
 router.post('/content/generate', authMiddleware, contentController.generateContent);
 
+// AI Writer Intelligence - Pre-writing & Research features
+const writerIntelligence = require('../controllers/writerIntelligenceController');
+router.post('/writer/analyze-topic', authMiddleware, writerIntelligence.analyzeTopic);
+router.post('/writer/generate-titles', authMiddleware, writerIntelligence.generateTitles);
+router.post('/writer/suggest-angles', authMiddleware, writerIntelligence.suggestAngles);
+router.post('/writer/build-research', authMiddleware, writerIntelligence.buildResearchFramework);
+router.post('/writer/refine-content', authMiddleware, writerIntelligence.refineContent);
+
 module.exports = router;
