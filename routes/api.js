@@ -112,8 +112,8 @@ const { getActivePromo } = require('../controllers/promoSettingsController');
 router.get('/promo-settings/active', getActivePromo);
 
 // Dictionary Route
-const dictionaryController = require('../controllers/dictionaryController'); // Corrected path
-router.post('/dictionary/lookup', authMiddleware, dictionaryController.lookupWord); // Changed method name
+const dictionaryController = require('../controllers/dictionaryController');
+router.post('/dictionary/lookup', authMiddleware, dictionaryController.lookupDictionary);
 
 // AI Content Writer
 const contentController = require('../controllers/contentController');
