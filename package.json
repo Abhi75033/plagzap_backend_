@@ -32,6 +32,7 @@
     "passport-google-oauth20": "^2.0.0",
     "pdf-parse": "^2.2.2",
     "razorpay": "^2.9.6",
+    "socket.io": "^4.8.1",
     "uuid": "^13.0.0"
   }
 }

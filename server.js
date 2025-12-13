@@ -12,12 +12,26 @@ console.log(`[${new Date().toISOString()}] DB config loaded`);
 
 const PORT = process.env.PORT || 5001;
 
+const http = require('http');
+const { Server } = require('socket.io');
+
 // Connect to Database
 console.log(`[${new Date().toISOString()}] Initiating DB connection...`);
 connectDB();
 
-console.log(`[${new Date().toISOString()}] Calling app.listen...`);
-const server = app.listen(PORT, () => {
+const httpServer = http.createServer(app);
+const io = new Server(httpServer, {
+  cors: {
+    origin: "*", // Allow all for now, tighten for prod
+    methods: ["GET", "POST"]
+  }
+});
+
+// Initialize Socket Controller
+require('./controllers/socketController')(io);
+
+console.log(`[${new Date().toISOString()}] Calling httpServer.listen...`);
+const server = httpServer.listen(PORT, () => {
   console.log(`[${new Date().toISOString()}] Server callback triggered`);
   console.log(`Server running on port ${PORT}`);
   console.timeEnd('Total Startup Time');

@@ -240,4 +240,51 @@ const rewriteText = async (initialText) => {
     }
 };
 
-module.exports = { rewriteText };
+// --- DICTIONARY & TRANSLATOR ---
+async function runGeminiDictionary(text, targetLang = 'English') {
+    logStage("➡️ [Dictionary]", `Lookup: "${text}" (Target: ${targetLang})`);
+
+    const prompt = `
+    ROLE: Smart Dictionary & Translator.
+    TASK: Analyze the following text and user's target language preference. Decide whether to provide a DEFINITION (for vocab lookup) or a TRANSLATION (for phrases/sentences/language conversion).
+
+    INPUT TEXT: "${text}"
+    TARGET LANGUAGE: "${targetLang}"
+
+    GUIDELINES:
+    1. If the text is a sentence or common phrase (e.g., "Hello world", "How are you"), or if the user clearly wants to convert language (e.g., "Apple" -> "Spanish"), choose TRANSLATION.
+    2. If the text is a single complex word (e.g., "Serendipity", "Ephemeral") and likely a definition lookup, choose DEFINITION.
+    3. If unsure, and the Target Language is different from the Detect Language of the text, default to TRANSLATION.
+    4. CRITICAL: ALWAYS identify the "detectedLanguage" of the input text accurately (e.g., "English", "Spanish", "French"). Do NOT use "Detected" or "Unknown" unless it is gibberish.
+
+    OUTPUT FORMAT (JSON) - Choose ONE based on your decision:
+
+    OPTION 1 (DEFINITION):
+    {
+        "type": "definition",
+        "word": "${text}",
+        "definition": "Clear definition.",
+        "partOfSpeech": "noun/verb...",
+        "etymology": "Origin...",
+        "synonyms": ["syn1", "syn2"],
+        "example": "Usage example."
+    }
+
+    OPTION 2 (TRANSLATION):
+    {
+        "type": "translation",
+        "original": "${text}",
+        "translated": "The translated text in ${targetLang}",
+        "targetLanguage": "${targetLang}",
+        "detectedLanguage": "The source language (e.g. English, French)"
+    }
+
+    Return ONLY valid JSON.
+    `;
+
+    const result = await runGeminiRewrite(text, prompt, 0.4); // Low temp for logic
+    logStage("   ✅", `Dictionary Result (${result.type || 'Unknown'}) Ready`);
+    return result;
+}
+
+module.exports = { rewriteText, runGeminiDictionary };

@@ -111,4 +111,8 @@ router.delete('/admin/feedbacks/:id', authMiddleware, adminMiddleware, feedbackC
 const { getActivePromo } = require('../controllers/promoSettingsController');
 router.get('/promo-settings/active', getActivePromo);
 
+// Dictionary Route
+const dictionaryController = require('../controllers/dictionaryController');
+router.post('/dictionary/lookup', authMiddleware, dictionaryController.lookupDictionary);
+
 module.exports = router;
