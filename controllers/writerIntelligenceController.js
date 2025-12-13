@@ -250,6 +250,16 @@ exports.refineContent = async (req, res) => {
     try {
         const { content, action, mode } = req.body;
 
+        console.log('🔧 Refinement request:', { action, mode, contentLength: content?.length });
+
+        if (!content || !content.trim()) {
+            return res.status(400).json({ error: 'Content is required' });
+        }
+
+        if (!action) {
+            return res.status(400).json({ error: 'Action is required' });
+        }
+
         const actionPrompts = {
             'reduceAI': 'Rewrite to reduce AI detection: vary sentence length, add natural imperfections, avoid AI phrases',
             'improveTone': `Improve tone to match ${mode} style better`,
@@ -267,10 +277,12 @@ Rules:
 - Only change what's needed for the specified improvement
 - Natural human writing
 
-Return JSON:
+Return ONLY valid JSON in this exact format:
 {
-  "refinedContent": "..."
+  "refinedContent": "your refined text here"
 }`;
+
+        console.log('📤 Calling Gemini API for refinement...');
 
         const response = await axios.post(
             `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${process.env.GEMINI_API_KEY}`,
@@ -278,17 +290,52 @@ Return JSON:
                 contents: [{ parts: [{ text: prompt }] }],
                 generationConfig: {
                     temperature: 0.7,
-                    responseMimeType: "application/json"
+                    responseMimeType: "application/json",
+                    maxOutputTokens: 2048
                 }
             },
             { headers: { 'Content-Type': 'application/json' } }
         );
 
-        const result = JSON.parse(response.data.candidates[0].content.parts[0].text);
+        console.log('📥 Received response from Gemini');
+
+        // Extract text from response
+        const rawText = response.data.candidates[0].content.parts[0].text;
+
+        // Try to parse JSON
+        let result;
+        try {
+            result = JSON.parse(rawText);
+        } catch (parseError) {
+            console.error('JSON parse error, raw response:', rawText);
+            // Fallback: if JSON parsing fails, just use the text as refined content
+            result = { refinedContent: rawText.replace(/```json|```/g, '').trim() };
+        }
+
+        // Validate result has refinedContent
+        if (!result.refinedContent) {
+            console.error('No refinedContent in result:', result);
+            return res.status(500).json({
+                error: 'Invalid response format from AI',
+                refinedContent: content // Return original as fallback
+            });
+        }
+
+        console.log('✅ Refinement successful, length:', result.refinedContent.length);
         res.json(result);
 
     } catch (error) {
-        console.error('Content refinement error:', error.response?.data || error.message);
-        res.status(500).json({ error: 'Failed to refine content' });
+        console.error('❌ Content refinement error:', error.response?.data || error.message);
+        console.error('Error details:', {
+            message: error.message,
+            status: error.response?.status,
+            data: error.response?.data
+        });
+
+        res.status(500).json({
+            error: 'Failed to refine content',
+            details: error.response?.data?.error?.message || error.message
+        });
     }
 };
+
