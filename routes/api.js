@@ -115,7 +115,7 @@ router.get('/promo-settings/active', getActivePromo);
 const dictionaryController = require('../controllers/dictionaryController');
 router.post('/dictionary/lookup', authMiddleware, dictionaryController.lookupDictionary);
 
-// AI Content Writer
+// AI Content Writer - Mode-based content generation
 const contentController = require('../controllers/contentController');
 router.post('/content/generate', authMiddleware, contentController.generateContent);
 
