@@ -10,8 +10,18 @@ exports.generateContent = async (req, res) => {
     try {
         const { mode, topic, keywords, tone, length } = req.body;
 
+        console.log('📝 Content generation request:', { mode, topic, tone, length });
+
         if (!topic || !topic.trim()) {
             return res.status(400).json({ error: 'Topic is required' });
+        }
+
+        // Check if Gemini API key is configured
+        if (!process.env.GEMINI_API_KEY) {
+            console.error('❌ GEMINI_API_KEY not configured');
+            return res.status(500).json({
+                error: 'AI service not configured. Please contact administrator.'
+            });
         }
 
         // Mode-specific prompts
