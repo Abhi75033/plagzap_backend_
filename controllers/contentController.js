@@ -165,9 +165,9 @@ IMPORTANT:
 Generate the complete content now:
 `;
 
-        // Call Gemini API - using standard model name
+        // Call Gemini API - using gemini-1.5-flash-latest (works with v1beta)
         const model = genAI.getGenerativeModel({
-            model: 'models/gemini-pro',
+            model: 'gemini-1.5-flash-latest',
             generationConfig: {
                 temperature: 0.9,
                 topK: 40,
@@ -175,9 +175,12 @@ Generate the complete content now:
                 maxOutputTokens: 2048,
             }
         });
+
+        console.log('🤖 Calling Gemini API with model: gemini-1.5-flash-latest');
         const result = await model.generateContent(fullPrompt);
         const response = await result.response;
         const content = response.text();
+        console.log('✅ Content generated successfully, length:', content.length);
 
         // Simulate feedback metrics (in production, integrate actual checkers)
         const feedback = {
