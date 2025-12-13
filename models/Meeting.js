@@ -5,29 +5,26 @@ const meetingSchema = new mongoose.Schema({
         type: String,
         required: true,
         unique: true,
-        index: true,
         uppercase: true,
-        match: /^[A-Z]{3}-[A-Z]{4}-[A-Z]{3}$/ // Format: ABC-DEFG-HIJ
+        trim: true
     },
     host: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
         required: true
     },
+    createdBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        required: true
+    },
     title: {
         type: String,
-        default: 'Untitled Meeting'
+        default: 'Team Meeting'
     },
     participants: [{
-        user: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'User'
-        },
-        joinedAt: {
-            type: Date,
-            default: Date.now
-        },
-        leftAt: Date
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
     }],
     settings: {
         maxParticipants: {
@@ -86,19 +83,17 @@ meetingSchema.statics.cleanupExpired = async function () {
 
 // Instance method to add participant
 meetingSchema.methods.addParticipant = function (userId) {
-    const existing = this.participants.find(p => p.user.toString() === userId.toString());
-    if (!existing) {
-        this.participants.push({ user: userId });
+    if (!this.participants.includes(userId)) {
+        this.participants.push(userId);
     }
     return this.save();
 };
 
 // Instance method to remove participant
 meetingSchema.methods.removeParticipant = function (userId) {
-    const participant = this.participants.find(p => p.user.toString() === userId.toString() && !p.leftAt);
-    if (participant) {
-        participant.leftAt = new Date();
-    }
+    this.participants = this.participants.filter(
+        p => p.toString() !== userId.toString()
+    );
     return this.save();
 };
 

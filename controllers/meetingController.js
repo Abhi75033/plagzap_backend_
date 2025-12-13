@@ -18,19 +18,21 @@ exports.createMeeting = async (req, res) => {
             code = Meeting.generateCode();
             codeExists = await Meeting.findOne({ code });
         }
-
+        // Create meeting
         const meeting = new Meeting({
             code,
-            host: userId,
-            title: title || 'Untitled Meeting',
+            title: title || `${req.user.name}'s Meeting`,
+            host: req.user.id,
+            createdBy: req.user.id,
+            participants: [req.user.id],  // Simplified: just array of user IDs
             settings: {
-                maxParticipants,
+                maxParticipants: maxParticipants || 50,
                 requireAuth: true,
                 allowScreenShare: true,
                 allowChat: true
-            }
+            },
+            status: 'scheduled'
         });
-
         await meeting.save();
 
         res.status(201).json({
@@ -84,9 +86,8 @@ exports.getMeeting = async (req, res) => {
                 title: meeting.title,
                 host: meeting.host,
                 status: meeting.status,
-                participants: meeting.participants.filter(p => !p.leftAt).map(p => ({
-                    user: p.user,
-                    joinedAt: p.joinedAt
+                participants: meeting.participants.map(p => ({
+                    user: p
                 })),
                 settings: meeting.settings,
                 createdAt: meeting.createdAt,
@@ -223,7 +224,7 @@ exports.getUserMeetings = async (req, res) => {
                 title: m.title,
                 host: m.host,
                 status: m.status,
-                participantCount: m.participants.filter(p => !p.leftAt).length,
+                participantCount: m.participants.length,
                 createdAt: m.createdAt,
                 expiresAt: m.expiresAt
             }))
