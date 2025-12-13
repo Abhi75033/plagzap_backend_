@@ -165,8 +165,8 @@ IMPORTANT:
 Generate the complete content now:
 `;
 
-        // Call Gemini API
-        const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
+        // Call Gemini API (using the newer model)
+        const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
         const result = await model.generateContent(fullPrompt);
         const response = await result.response;
         const content = response.text();
