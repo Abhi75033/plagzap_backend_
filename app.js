@@ -63,6 +63,7 @@ app.use((req, res, next) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/subscriptions', subscriptionRoutes);
 app.use('/api/admin', auth, adminAuth, adminRoutes); // Protect all admin routes (MOVED UP)
+app.use('/api/meetings', require('./routes/meetings')); // Video meeting routes
 app.use('/api', apiRoutes);
 app.use('/api/webhooks', webhookRoutes);
 

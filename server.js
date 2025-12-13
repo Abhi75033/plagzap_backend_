@@ -27,8 +27,9 @@ const io = new Server(httpServer, {
   }
 });
 
-// Initialize Socket Controller
-require('./controllers/socketController')(io);
+// Initialize Socket Controllers
+require('./controllers/socketController')(io); // Legacy team chat/video
+require('./controllers/socketVideoController')(io); // New Google Meet-style video
 
 console.log(`[${new Date().toISOString()}] Calling httpServer.listen...`);
 const server = httpServer.listen(PORT, () => {
