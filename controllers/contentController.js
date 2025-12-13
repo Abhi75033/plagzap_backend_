@@ -163,11 +163,11 @@ IMPORTANT:
 Generate the complete content now:
 `;
 
-        // Call Gemini API directly - trying v1beta with gemini-1.5-flash
-        console.log('🤖 Calling Gemini API via REST (v1beta with gemini-1.5-flash)');
+        // Call Gemini API - using gemini-2.0-flash (same as rewriteService uses!)
+        console.log('🤖 Calling Gemini API via REST (v1beta with gemini-2.0-flash)');
 
         const response = await axios.post(
-            `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
+            `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${process.env.GEMINI_API_KEY}`,
             {
                 contents: [{
                     parts: [{
