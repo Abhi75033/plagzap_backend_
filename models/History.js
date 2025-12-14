@@ -29,6 +29,24 @@ const historySchema = new mongoose.Schema({
         type: String,
         default: null,
     },
+    // Writer Intelligence fields
+    mode: {
+        type: String,
+        enum: ['blog', 'research', 'academic', 'professional', null],
+        default: null,
+    },
+    aiRiskBefore: {
+        type: Number,
+        default: null,
+    },
+    aiRiskAfter: {
+        type: Number,
+        default: null,
+    },
+    refinements: {
+        type: [String],
+        default: [],
+    },
     // Team sharing fields
     title: {
         type: String,
