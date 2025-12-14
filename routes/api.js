@@ -131,5 +131,10 @@ router.post('/writer/refine-content', authMiddleware, writerIntelligenceControll
 const writerHistoryController = require('../controllers/writerHistoryController');
 router.post('/writer/save-to-history', authMiddleware, writerHistoryController.saveToHistory);
 
+// Explainability Route (sentence-level AI explanation)
+const explainabilityController = require('../controllers/explainabilityController');
+router.post('/explainability/analyze', authMiddleware, explainabilityController.explainSentences);
+
 module.exports = router;
+
 
