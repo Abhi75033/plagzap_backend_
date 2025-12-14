@@ -139,10 +139,12 @@ router.post('/writer/save-to-history', authMiddleware, writerHistoryController.s
 const explainabilityController = require('../controllers/explainabilityController');
 router.post('/explainability/analyze', authMiddleware, explainabilityController.explainSentences);
 
-// Supervisor Feedback Route (academic grading and feedback)
+// Supervisor Feedback Routes (Premium Feature #3)
 const supervisorController = require('../controllers/supervisorController');
 router.post('/supervisor/feedback', authMiddleware, supervisorController.getSupervisorFeedback);
 
+// Research Gap & Novelty Analysis (Premium Feature #5)
+const noveltyController = require('../controllers/noveltyController');
+router.post('/novelty/analyze', authMiddleware, noveltyController.analyzeNovelty);
+
 module.exports = router;
-
-
