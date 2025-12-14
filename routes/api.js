@@ -119,12 +119,16 @@ router.post('/dictionary/lookup', authMiddleware, dictionaryController.lookupDic
 const contentController = require('../controllers/contentController');
 router.post('/content/generate', authMiddleware, contentController.generateContent);
 
-// AI Writer Intelligence - Pre-writing & Research features
-const writerIntelligence = require('../controllers/writerIntelligenceController');
-router.post('/writer/analyze-topic', authMiddleware, writerIntelligence.analyzeTopic);
-router.post('/writer/generate-titles', authMiddleware, writerIntelligence.generateTitles);
-router.post('/writer/suggest-angles', authMiddleware, writerIntelligence.suggestAngles);
-router.post('/writer/build-research', authMiddleware, writerIntelligence.buildResearchFramework);
-router.post('/writer/refine-content', authMiddleware, writerIntelligence.refineContent);
+// AI Writer Intelligence - Pre-w// Writer Intelligence Routes
+const writerIntelligenceController = require('../controllers/writerIntelligenceController');
+router.post('/writer/analyze-topic', authMiddleware, writerIntelligenceController.analyzeTopic);
+router.post('/writer/suggest-titles', authMiddleware, writerIntelligenceController.suggestTitles);
+router.post('/writer/suggest-angles', authMiddleware, writerIntelligenceController.suggestAngles);
+router.post('/writer/build-research', authMiddleware, writerIntelligenceController.buildResearch);
+router.post('/writer/refine-content', authMiddleware, writerIntelligenceController.refineContent);
+
+// Writer History Route (save generated content)
+const writerHistoryController = require('../controllers/writerHistoryController');
+router.post('/writer/save-to-history', authMiddleware, writerHistoryController.saveToHistory);
 
 module.exports = router;
