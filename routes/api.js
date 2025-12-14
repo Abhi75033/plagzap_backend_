@@ -119,12 +119,12 @@ router.post('/dictionary/lookup', authMiddleware, dictionaryController.lookupDic
 const contentController = require('../controllers/contentController');
 router.post('/content/generate', authMiddleware, contentController.generateContent);
 
-// AI Writer Intelligence - Pre-w// Writer Intelligence Routes
+// Writer Intelligence Routes
 const writerIntelligenceController = require('../controllers/writerIntelligenceController');
 router.post('/writer/analyze-topic', authMiddleware, writerIntelligenceController.analyzeTopic);
-router.post('/writer/suggest-titles', authMiddleware, writerIntelligenceController.suggestTitles);
+router.post('/writer/suggest-titles', authMiddleware, writerIntelligenceController.generateTitles);
 router.post('/writer/suggest-angles', authMiddleware, writerIntelligenceController.suggestAngles);
-router.post('/writer/build-research', authMiddleware, writerIntelligenceController.buildResearch);
+router.post('/writer/build-research', authMiddleware, writerIntelligenceController.buildResearchFramework);
 router.post('/writer/refine-content', authMiddleware, writerIntelligenceController.refineContent);
 
 // Writer History Route (save generated content)
@@ -132,3 +132,4 @@ const writerHistoryController = require('../controllers/writerHistoryController'
 router.post('/writer/save-to-history', authMiddleware, writerHistoryController.saveToHistory);
 
 module.exports = router;
+
