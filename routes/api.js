@@ -119,6 +119,10 @@ router.post('/dictionary/lookup', authMiddleware, dictionaryController.lookupDic
 const contentController = require('../controllers/contentController');
 router.post('/content/generate', authMiddleware, contentController.generateContent);
 
+// Writing Presets - Quick-start templates
+router.get('/presets/list', contentController.getPresets);
+router.post('/presets/generate', authMiddleware, contentController.generateFromPreset);
+
 // Writer Intelligence Routes
 const writerIntelligenceController = require('../controllers/writerIntelligenceController');
 router.post('/writer/analyze-topic', authMiddleware, writerIntelligenceController.analyzeTopic);

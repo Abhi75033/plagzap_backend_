@@ -212,3 +212,58 @@ Generate the complete content now:
         });
     }
 };
+
+/**
+ * WRITING PRESETS
+ * Quick-start templates for academic writing
+ */
+const presets = require('../config/writingPresets');
+
+// Get list of available presets
+exports.getPresets = (req, res) => {
+    res.json({ presets: presets.presets });
+};
+
+// Generate content from preset
+exports.generateFromPreset = async (req, res) => {
+    try {
+        const { presetId, topic } = req.body;
+
+        if (!presetId || !topic) {
+            return res.status(400).json({ error: 'Preset ID and topic are required' });
+        }
+
+        const preset = presets.presets.find(p => p.id === presetId);
+        if (!preset) {
+            return res.status(404).json({ error: 'Preset not found' });
+        }
+
+        // Replace {topic} in prompt
+        const customizedPrompt = preset.prompt.replace(/{topic}/g, topic);
+
+        const response = await axios.post(
+            `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${process.env.GEMINI_API_KEY}`,
+            {
+                contents: [{ parts: [{ text: customizedPrompt }] }],
+                generationConfig: {
+                    temperature: 0.7,
+                    maxOutputTokens: 2048
+                }
+            },
+            { headers: { 'Content-Type': 'application/json' } }
+        );
+
+        const content = response.data.candidates[0].content.parts[0].text;
+
+        res.json({
+            content,
+            preset: {
+                name: preset.name,
+                structure: preset.structure
+            }
+        });
+    } catch (error) {
+        console.error('Preset generation error:', error);
+        res.status(500).json({ error: 'Failed to generate content from preset' });
+    }
+};
