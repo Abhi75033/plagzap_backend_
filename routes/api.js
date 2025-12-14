@@ -135,6 +135,10 @@ router.post('/writer/save-to-history', authMiddleware, writerHistoryController.s
 const explainabilityController = require('../controllers/explainabilityController');
 router.post('/explainability/analyze', authMiddleware, explainabilityController.explainSentences);
 
+// Supervisor Feedback Route (academic grading and feedback)
+const supervisorController = require('../controllers/supervisorController');
+router.post('/supervisor/feedback', authMiddleware, supervisorController.getSupervisorFeedback);
+
 module.exports = router;
 
 
