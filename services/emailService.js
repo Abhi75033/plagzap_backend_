@@ -504,6 +504,45 @@ module.exports = {
         return sendEmail(email, '🔥 Special Offer: Premium for ₹49!', html);
     },
 
+    // Email Verification
+    sendVerificationEmail: async (user, token) => {
+        const frontendUrl = process.env.FRONTEND_URL || process.env.CLIENT_URL || 'http://localhost:5173';
+        const verificationUrl = `${frontendUrl}/verify-email?token=${token}`;
+
+        const content = `
+            <h2 style="margin: 0 0 20px 0; color: #ffffff; font-size: 24px; font-weight: 600;">
+                Verify Your Email Address 📧
+            </h2>
+            <p style="margin: 0 0 20px 0; color: #b0b0b0; font-size: 16px; line-height: 1.6;">
+                Hello ${user.name},<br><br>
+                Thanks for signing up! Please verify your email address to unlock all features including rewards and referrals.
+            </p>
+            <div style="background: rgba(139, 92, 246, 0.1); border: 1px solid rgba(139, 92, 246, 0.2); padding: 25px; border-radius: 12px; margin: 25px 0;">
+                <p style="margin: 0 0 15px 0; color: #a78bfa; font-size: 16px; font-weight: 600;">
+                    ✨ What you'll unlock:
+                </p>
+                <ul style="margin: 0; padding-left: 20px; color: #d4d4d8; font-size: 15px; line-height: 1.8;">
+                    <li>Earn coins through daily streaks</li>
+                    <li>Claim milestone rewards</li>
+                    <li>Refer friends and earn bonuses</li>
+                    <li>Redeem coins for premium features</li>
+                </ul>
+            </div>
+            <div style="text-align: center; margin: 30px 0;">
+                <a href="${verificationUrl}" 
+                   style="display: inline-block; background: linear-gradient(135deg, #8b5cf6 0%, #a78bfa 100%); color: #ffffff; text-decoration: none; padding: 16px 40px; border-radius: 12px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);">
+                    Verify Email Address
+                </a>
+            </div>
+            <p style="margin: 20px 0 0 0; color: #71717a; font-size: 13px; text-align: center;">
+                This link expires in 24 hours. If you didn't create this account, please ignore this email.
+            </p>
+        `;
+
+        const html = getBaseTemplate(content, 'Verify Your Email - PlagZap');
+        return sendEmail(user.email, '📧 Verify Your Email - PlagZap', html);
+    },
+
     // Bulk send promotional emails
     sendBulkPromotionalEmail: async (users, subject, message, ctaText, ctaUrl, couponCode) => {
         const results = [];

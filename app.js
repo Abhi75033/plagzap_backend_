@@ -18,6 +18,12 @@ const adminRoutes = require('./routes/admin');
 console.log('Loaded adminRoutes');
 const webhookRoutes = require('./routes/webhook');
 console.log('Loaded webhookRoutes');
+const rewardsRoutes = require('./routes/rewards');
+console.log('Loaded rewardsRoutes');
+const referralRoutes = require('./routes/referrals'); // Phase 2: Referrals
+console.log('Loaded referralRoutes');
+const adminSecurityRoutes = require('./routes/adminSecurity'); // Phase 4
+console.log('Loaded adminSecurityRoutes');
 const auth = require('./middleware/auth');
 console.log('Loaded auth middleware');
 const adminAuth = require('./middleware/adminAuth');
@@ -62,7 +68,10 @@ app.use((req, res, next) => {
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/subscriptions', subscriptionRoutes);
+app.use('/api/rewards', rewardsRoutes); // Rewards system routes (Phase 1)
+app.use('/api/referrals', referralRoutes); // Phase 2: Referrals
 app.use('/api/admin', auth, adminAuth, adminRoutes); // Protect all admin routes (MOVED UP)
+app.use('/api/admin/security', auth, adminAuth, adminSecurityRoutes); // Phase 4: Security Dashboard
 app.use('/api/meetings', require('./routes/meetings')); // Video meeting routes
 app.use('/api', apiRoutes);
 app.use('/api/webhooks', webhookRoutes);

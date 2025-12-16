@@ -1,6 +1,7 @@
 const User = require('../models/User');
 const jwt = require('jsonwebtoken');
 const emailService = require('../services/emailService');
+const referralService = require('../services/referralService'); // Phase 2: Referrals
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
 const JWT_EXPIRES_IN = '30d';
@@ -13,7 +14,7 @@ const generateToken = (userId) => {
 // Register new user
 exports.register = async (req, res) => {
     try {
-        const { name, email, password } = req.body;
+        const { name, email, password, referralCode } = req.body; // Phase 2: Added referralCode
 
         // Validate input
         if (!name || !email || !password) {
@@ -30,12 +31,80 @@ exports.register = async (req, res) => {
             return res.status(400).json({ error: 'Email already registered' });
         }
 
+        // Phase 2: Validate referral code if provided
+        let referrerId = null;
+        if (referralCode && referralCode.trim().length > 0) {
+            const validation = await referralService.validateReferralCode(referralCode);
+            if (validation && validation.valid) {
+                referrerId = validation.referrer._id;
+            }
+            // Note: We don't fail registration if code is invalid, just ignore it
+        }
+
         // Create user
         const user = new User({ name, email, password });
         await user.save();
 
+        // Phase 2: Track referral if valid code was provided
+        if (referrerId) {
+            try {
+                await referralService.trackReferral(
+                    referrerId,
+                    user._id,
+                    referralCode.toUpperCase(),
+                    {
+                        ipAddress: req.ip || req.connection.remoteAddress,
+                        deviceFingerprint: req.headers['user-agent']
+                    }
+                );
+
+                // Award immediate welcome bonus to new user (25 coins)
+                const coinService = require('../services/coinService');
+                await coinService.awardCoins(
+                    user._id,
+                    25,
+                    'referral_signup',
+                    'Welcome bonus for using referral code',
+                    { referrerId }
+                );
+            } catch (referralError) {
+                console.error('Referral tracking error (non-critical):', referralError);
+                // Don't fail registration if referral tracking fails
+            }
+        }
+
         // Generate token
         const token = generateToken(user._id);
+
+        // Phase 3: Send verification email (critical for security)
+        try {
+            const crypto = require('crypto');
+            const EmailVerification = require('../models/EmailVerification');
+
+            // Generate verification token
+            const verificationToken = crypto.randomBytes(32).toString('hex');
+            const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+
+            // Create verification record
+            await EmailVerification.create({
+                userId: user._id,
+                token: verificationToken,
+                expiresAt
+            });
+
+            // Update user with verification token
+            user.emailVerificationToken = verificationToken;
+            user.emailVerificationExpires = expiresAt;
+            await user.save();
+
+            // Send verification email (high priority, but non-blocking)
+            emailService.sendVerificationEmail(user, verificationToken).catch(err => {
+                console.error('Verification email error (non-blocking):', err.message);
+            });
+        } catch (verifyError) {
+            console.error('Verification token generation error:', verifyError);
+            // Don't fail registration if verification fails
+        }
 
         // Send welcome email (async, don't wait)
         emailService.sendWelcomeEmail(email, name).catch(err => {
@@ -48,11 +117,14 @@ exports.register = async (req, res) => {
                 id: user._id,
                 name: user.name,
                 email: user.email,
-                subscriptionTier: user.subscriptionTier,
+                emailVerified: user.emailVerified, // Phase 3
                 subscriptionTier: user.subscriptionTier,
                 usageCount: user.usageCount,
                 role: user.role,
             },
+            // Phase 3: Verification notice
+            message: 'Registration successful! Please check your email to verify your account.',
+            verificationRequired: true,
         });
     } catch (error) {
         console.error('Registration error:', error);

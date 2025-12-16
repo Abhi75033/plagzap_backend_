@@ -150,6 +150,87 @@ const userSchema = new mongoose.Schema({
         type: Number,
         default: 0,
     },
+    // ========== PHASE 1: REWARDS SYSTEM ==========
+    // Coins System
+    coins: {
+        type: Number,
+        default: 0,
+    },
+    // Streak Milestones (track which milestones have been claimed)
+    streakMilestones: [{
+        days: {
+            type: Number,
+            required: true,
+        },
+        claimedAt: {
+            type: Date,
+            required: true,
+        },
+        coinReward: {
+            type: Number,
+            required: true,
+        }
+    }],
+    // Last Active Date (for streak calculation - must have meaningful action)
+    lastActiveDate: {
+        type: Date,
+        default: null,
+    },
+    // Email Verification (Phase 3 - adding now for future)
+    emailVerified: {
+        type: Boolean,
+        default: false,
+    },
+    emailVerificationToken: {
+        type: String,
+        default: null,
+    },
+    emailVerificationExpires: {
+        type: Date,
+        default: null,
+    },
+    // Account Age (for reward eligibility)
+    accountAge: {
+        type: Date,
+        default: Date.now,
+    },
+    // ========== PHASE 2: REFERRAL SYSTEM ==========
+    // Unique referral code for this user
+    referralCode: {
+        type: String,
+        unique: true,
+        sparse: true, // Allow null values but ensure uniqueness
+        index: true,
+    },
+    // User who referred this user
+    referredBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        default: null,
+    },
+    // Count of successful referrals
+    referralCount: {
+        type: Number,
+        default: 0,
+    },
+    // Track referral rewards claimed
+    referralRewards: [{
+        referredUserId: mongoose.Schema.Types.ObjectId,
+        coinsEarned: Number,
+        claimedAt: Date,
+    }],
+    // Monthly referral tracking (anti-abuse)
+    monthlyReferrals: {
+        count: {
+            type: Number,
+            default: 0,
+        },
+        lastResetDate: {
+            type: Date,
+            default: Date.now,
+        },
+    },
+    // ========== END REWARDS SYSTEM ==========
     createdAt: {
         type: Date,
         default: Date.now,
