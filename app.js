@@ -24,6 +24,9 @@ const referralRoutes = require('./routes/referrals'); // Phase 2: Referrals
 console.log('Loaded referralRoutes');
 const adminSecurityRoutes = require('./routes/adminSecurity'); // Phase 4
 console.log('Loaded adminSecurityRoutes');
+const achievementRoutes = require('./routes/achievements'); // Phase 5
+const leaderboardRoutes = require('./routes/leaderboard'); // Phase 5
+console.log('Loaded achievementRoutes and leaderboardRoutes');
 const auth = require('./middleware/auth');
 console.log('Loaded auth middleware');
 const adminAuth = require('./middleware/adminAuth');
@@ -72,6 +75,8 @@ app.use('/api/rewards', rewardsRoutes); // Rewards system routes (Phase 1)
 app.use('/api/referrals', referralRoutes); // Phase 2: Referrals
 app.use('/api/admin', auth, adminAuth, adminRoutes); // Protect all admin routes (MOVED UP)
 app.use('/api/admin/security', auth, adminAuth, adminSecurityRoutes); // Phase 4: Security Dashboard
+app.use('/api/achievements', achievementRoutes); // Phase 5: Achievements
+app.use('/api/leaderboard', leaderboardRoutes); // Phase 5: Leaderboards
 app.use('/api/meetings', require('./routes/meetings')); // Video meeting routes
 app.use('/api', apiRoutes);
 app.use('/api/webhooks', webhookRoutes);

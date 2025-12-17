@@ -150,6 +150,20 @@ const userSchema = new mongoose.Schema({
         type: Number,
         default: 0,
     },
+    // ========== PHASE 5: ACHIEVEMENTS & LEADERBOARD ==========
+    xp: {
+        type: Number,
+        default: 0,
+    },
+    totalWordsProcessed: {
+        type: Number,
+        default: 0,
+    },
+    universityId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'University',
+        default: null,
+    },
     // ========== PHASE 1: REWARDS SYSTEM ==========
     // Coins System
     coins: {
@@ -187,6 +201,10 @@ const userSchema = new mongoose.Schema({
     },
     emailVerificationExpires: {
         type: Date,
+        default: null,
+    },
+    lastVerificationEmailSent: {
+        type: Date, // Track last email send time for 60s cooldown
         default: null,
     },
     // Account Age (for reward eligibility)

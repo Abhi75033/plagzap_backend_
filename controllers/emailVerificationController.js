@@ -19,12 +19,16 @@ async function sendVerificationEmail(req, res) {
         }
 
         // Check cooldown (prevent spam - max 1 email per 60 seconds)
-        if (user.emailVerificationExpires && user.emailVerificationExpires > new Date(Date.now() - 60000)) {
-            const secondsRemaining = Math.ceil((user.emailVerificationExpires - (Date.now() - 60000)) / 1000);
-            return res.status(429).json({
-                error: 'Please wait before requesting another verification email',
-                secondsRemaining
-            });
+        // Use lastVerificationEmailSent timestamp if available
+        if (user.lastVerificationEmailSent) {
+            const timeSinceLastEmail = Date.now() - new Date(user.lastVerificationEmailSent).getTime();
+            if (timeSinceLastEmail < 60000) { // 60 seconds = 60000ms
+                const secondsRemaining = Math.ceil((60000 - timeSinceLastEmail) / 1000);
+                return res.status(429).json({
+                    error: 'Please wait before requesting another verification email',
+                    secondsRemaining
+                });
+            }
         }
 
         // Generate verification token
@@ -44,6 +48,7 @@ async function sendVerificationEmail(req, res) {
         // Update user
         user.emailVerificationToken = token;
         user.emailVerificationExpires = expiresAt;
+        user.lastVerificationEmailSent = new Date(); // Track last send time for cooldown
         await user.save();
 
         // Send email

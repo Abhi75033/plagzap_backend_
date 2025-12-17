@@ -208,8 +208,31 @@ exports.checkPlagiarism = async (req, res) => {
         const plagiarismScore = chunks.length > 0 ?
             Math.round((plagiarizedCount / chunks.length) * 100) : 0;
 
+
         // Update User Usage
         await user.incrementUsage();
+
+        // Phase 5: Track words processed and check achievements
+        const wordCount = text.split(/\s+/).length;
+        user.totalWordsProcessed = (user.totalWordsProcessed || 0) + wordCount;
+        await user.save();
+
+        // Check for achievements (Phase 5)
+        const AchievementService = require('../services/achievementService');
+        const LeaderboardService = require('../services/leaderboardService');
+
+        try {
+            const newlyUnlocked = await AchievementService.checkAchievements(user._id, 'scan', {
+                wordsCount: wordCount
+            });
+
+            // Update leaderboard if achievements were unlocked
+            if (newlyUnlocked.length > 0) {
+                await LeaderboardService.updateLeaderboard(user._id);
+            }
+        } catch (achError) {
+            console.error('Achievement check failed:', achError);
+        }
 
         // Process gamification (streaks & badges)
         let gamificationResult = { streak: null, newBadges: [] };
@@ -218,6 +241,7 @@ exports.checkPlagiarism = async (req, res) => {
         } catch (e) {
             console.error('Gamification error:', e.message);
         }
+
 
         // Get updated status for response
         const updatedStatus = user.canPerformAnalysis();
