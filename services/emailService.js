@@ -561,5 +561,132 @@ module.exports = {
             await new Promise(resolve => setTimeout(resolve, 100));
         }
         return results;
+    },
+
+    /**
+     * Send Password Reset Email
+     * Secure password reset link with expiry warning
+     */
+    sendPasswordResetEmail: async (email, name, resetUrl) => {
+        const html = `
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <style>
+                    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; background: #f4f4f4; margin: 0; padding: 0; }
+                    .container { max-width: 600px; margin: 20px auto; background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+                    .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px 20px; text-align: center; color: white; }
+                    .header h1 { margin: 0; font-size: 28px; }
+                    .content { padding: 40px 30px; }
+                    .button { display: inline-block; padding: 15px 35px; background: #667eea; color: white; text-decoration: none; border-radius: 8px; margin: 20px 0; font-weight: bold; }
+                    .button:hover { background: #5568d3; }
+                    .footer { text-align: center; padding: 20px; background: #f9f9f9; color: #999; font-size: 12px; }
+                    .warning { background: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin: 20px 0; border-radius: 4px; }
+                    .code-block { background: #f5f5f5; padding: 15px; border-radius: 5px; word-break: break-all; color: #667eea; font-family: monospace; margin: 15px 0; }
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <div class="header">
+                        <h1>🔐 Password Reset</h1>
+                    </div>
+                    <div class="content">
+                        <p>Hi <strong>${name}</strong>,</p>
+                        <p>We received a request to reset your password for your PlagZap account.</p>
+                        <p>Click the button below to reset your password:</p>
+                        <p style="text-align: center;">
+                            <a href="${resetUrl}" class="button">Reset Password</a>
+                        </p>
+                        <p>Or copy and paste this link into your browser:</p>
+                        <div class="code-block">${resetUrl}</div>
+                        
+                        <div class="warning">
+                            <strong>⚠️ Security Notice:</strong>
+                            <ul style="margin: 10px 0; padding-left: 20px;">
+                                <li>This link expires in <strong>15 minutes</strong></li>
+                                <li>This link can only be used <strong>once</strong></li>
+                                <li>If you didn't request this, please ignore this email</li>
+                                <li>Your password won't change until you create a new one</li>
+                            </ul>
+                        </div>
+                        
+                        <p style="margin-top: 30px; color: #666; font-size: 14px;">
+                            If you didn't request a password reset, you can safely ignore this email. Your password will remain unchanged.
+                        </p>
+                    </div>
+                    <div class="footer">
+                        <p>&copy; ${new Date().getFullYear()} PlagZap. All rights reserved.</p>
+                        <p>This is an automated email. Please do not reply.</p>
+                    </div>
+                </div>
+            </body>
+            </html>
+        `;
+
+        return sendEmail(email, '🔐 Password Reset Request - PlagZap', html);
+    },
+
+    /**
+     * Send Password Changed Confirmation Email
+     * Security notification after successful password reset
+     */
+    sendPasswordChangedEmail: async (email, name) => {
+        const html = `
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <style>
+                    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; background: #f4f4f4; margin: 0; padding: 0; }
+                    .container { max-width: 600px; margin: 20px auto; background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+                    .header { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); padding: 40px 20px; text-align: center; color: white; }
+                    .header h1 { margin: 0; font-size: 28px; }
+                    .content { padding: 40px 30px; }
+                    .footer { text-align: center; padding: 20px; background: #f9f9f9; color: #999; font-size: 12px; }
+                    .alert { background: #d4edda; border-left: 4px solid #28a745; padding: 15px; margin: 20px 0; border-radius: 4px; }
+                    .warning { background: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin: 20px 0; border-radius: 4px; }
+                    .timestamp { background: #f5f5f5; padding: 10px; border-radius: 5px; text-align: center; margin: 20px 0; }
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <div class="header">
+                        <h1>✅ Password Changed</h1>
+                    </div>
+                    <div class="content">
+                        <p>Hi <strong>${name}</strong>,</p>
+                        <p>Your password for your PlagZap account has been successfully changed.</p>
+                        
+                        <div class="alert">
+                            <strong>🔒 Your account is secure</strong>
+                            <p style="margin: 10px 0 0 0;">If you made this change, no further action is needed. You can continue using PlagZap with your new password.</p>
+                        </div>
+                        
+                        <div class="timestamp">
+                            <strong>Changed at:</strong> ${new Date().toLocaleString()}
+                        </div>
+                        
+                        <div class="warning">
+                            <strong>⚠️ Didn't make this change?</strong>
+                            <p style="margin: 10px 0 0 0;">
+                                If you did NOT request this password change, your account may be compromised. 
+                                Please contact our support team immediately at 
+                                <a href="mailto:support@plagzap.com" style="color: #667eea; text-decoration: none; font-weight: bold;">support@plagzap.com</a>
+                            </p>
+                        </div>
+                        
+                        <p style="margin-top: 30px; color: #666; font-size: 14px;">
+                            For your security, we recommend using a strong, unique password and enabling two-factor authentication if available.
+                        </p>
+                    </div>
+                    <div class="footer">
+                        <p>&copy; ${new Date().getFullYear()} PlagZap. All rights reserved.</p>
+                        <p>This is an automated security notification.</p>
+                    </div>
+                </div>
+            </body>
+            </html>
+        `;
+
+        return sendEmail(email, '✅ Password Successfully Changed - PlagZap', html);
     }
 };

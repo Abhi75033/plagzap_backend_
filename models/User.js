@@ -207,6 +207,23 @@ const userSchema = new mongoose.Schema({
         type: Date, // Track last email send time for 60s cooldown
         default: null,
     },
+    // ========== PASSWORD RESET (FORGOT PASSWORD) ==========
+    resetPasswordToken: {
+        type: String,
+        default: null,
+    },
+    resetPasswordExpires: {
+        type: Date,
+        default: null,
+    },
+    resetPasswordAttempts: {
+        type: Number,
+        default: 0,
+    },
+    lastResetRequest: {
+        type: Date,
+        default: null,
+    },
     // Account Age (for reward eligibility)
     accountAge: {
         type: Date,
