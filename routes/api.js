@@ -23,6 +23,10 @@ const citationController = require('../controllers/citationController');
 
 // Protected routes - require authentication
 router.post('/plagiarism/check', authMiddleware, plagiarismController.checkPlagiarism);
+
+
+
+
 router.post('/plagiarism/bulk', authMiddleware, plagiarismController.bulkCheck);
 router.get('/plagiarism/bulk/:batchId', authMiddleware, plagiarismController.getBatchStatus);
 router.get('/plagiarism/batches', authMiddleware, plagiarismController.getUserBatches);
