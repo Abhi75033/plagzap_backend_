@@ -7,6 +7,7 @@ if (plagiarismController) console.log('DEBUG MSG: checkPlagiarism type:', typeof
 const rewriteController = require('../controllers/rewriteController');
 const historyController = require('../controllers/historyController');
 const authMiddleware = require('../middleware/auth');
+const optionalAuthMiddleware = require('../middleware/optionalAuth'); // For freemium features
 console.log('DEBUG MSG: authMiddleware type:', typeof authMiddleware);
 
 const uploadController = require('../controllers/uploadController');
@@ -22,7 +23,7 @@ const grammarController = require('../controllers/grammarController');
 const citationController = require('../controllers/citationController');
 
 // Protected routes - require authentication
-router.post('/plagiarism/check', authMiddleware, plagiarismController.checkPlagiarism);
+router.post('/plagiarism/check', optionalAuthMiddleware, plagiarismController.checkPlagiarism); // Allow anonymous users
 
 
 
@@ -121,7 +122,7 @@ router.post('/dictionary/lookup', authMiddleware, dictionaryController.lookupDic
 
 // AI Content Writer - Mode-based content generation
 const contentController = require('../controllers/contentController');
-router.post('/content/generate', authMiddleware, contentController.generateContent);
+router.post('/content/generate', optionalAuthMiddleware, contentController.generateContent); // Allow anonymous users
 
 // Writing Presets - Quick-start templates
 router.get('/presets/list', contentController.getPresets);
