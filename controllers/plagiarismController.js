@@ -118,17 +118,19 @@ exports.checkPlagiarism = async (req, res) => {
             return res.status(400).json({ error: 'Text is required' });
         }
 
-        // Check Permissions
-        const analysisStatus = user.canPerformAnalysis();
-        if (!analysisStatus.allowed) {
-            return res.status(403).json({
-                error: 'Limit reached',
-                reason: analysisStatus.reason,
-                limit: analysisStatus.limit,
-            });
+        // Check Permissions (skip for anonymous users - freemium)
+        if (user) {
+            const analysisStatus = user.canPerformAnalysis();
+            if (!analysisStatus.allowed) {
+                return res.status(403).json({
+                    error: 'Limit reached',
+                    reason: analysisStatus.reason,
+                    limit: analysisStatus.limit,
+                });
+            }
         }
 
-        console.log('Analyzing text for user:', user._id, 'Length:', text.length);
+        console.log('Analyzing text for user:', user?._id || 'anonymous', 'Length:', text.length);
 
         // 1. Split text into chunks (balance: accuracy vs speed)
         const chunks = splitTextIntoChunks(text, 200); // Larger chunks = fewer API calls
@@ -209,42 +211,45 @@ exports.checkPlagiarism = async (req, res) => {
             Math.round((plagiarizedCount / chunks.length) * 100) : 0;
 
 
-        // Update User Usage
-        await user.incrementUsage();
+        // Update User Usage (only for logged-in users)
+        if (user) {
+            await user.incrementUsage();
 
-        // Phase 5: Track words processed and check achievements
-        const wordCount = text.split(/\s+/).length;
-        user.totalWordsProcessed = (user.totalWordsProcessed || 0) + wordCount;
-        await user.save();
+            // Phase 5: Track words processed and check achievements
+            const wordCount = text.split(/\s+/).length;
+            user.totalWordsProcessed = (user.totalWordsProcessed || 0) + wordCount;
+            await user.save();
 
-        // Check for achievements (Phase 5)
-        const AchievementService = require('../services/achievementService');
-        const LeaderboardService = require('../services/leaderboardService');
+            // Check for achievements (Phase 5)
+            const AchievementService = require('../services/achievementService');
+            const LeaderboardService = require('../services/leaderboard Service');
 
-        try {
-            const newlyUnlocked = await AchievementService.checkAchievements(user._id, 'scan', {
-                wordsCount: wordCount
-            });
+            try {
+                const newlyUnlocked = await AchievementService.checkAchievements(user._id, 'scan', {
+                    wordsCount: wordCount
+                });
 
-            // Update leaderboard if achievements were unlocked
-            if (newlyUnlocked.length > 0) {
-                await LeaderboardService.updateLeaderboard(user._id);
+                // Update leaderboard if achievements were unlocked
+                if (newlyUnlocked.length > 0) {
+                    await LeaderboardService.updateLeaderboard(user._id);
+                }
+            } catch (achError) {
+                console.error('Achievement check failed:', achError);
             }
-        } catch (achError) {
-            console.error('Achievement check failed:', achError);
         }
 
-        // Process gamification (streaks & badges)
+        // Process gamification (streaks & badges) - only for logged-in users
         let gamificationResult = { streak: null, newBadges: [] };
-        try {
-            gamificationResult = await processAnalysis(user._id);
-        } catch (e) {
-            console.error('Gamification error:', e.message);
+        if (user) {
+            try {
+                gamificationResult = await processAnalysis(user._id);
+            } catch (e) {
+                console.error('Gamification error:', e.message);
+            }
         }
 
-
-        // Get updated status for response
-        const updatedStatus = user.canPerformAnalysis();
+        // Get updated status for response (only for logged-in users)
+        const updatedStatus = user ? user.canPerformAnalysis() : null;
 
         // Perform AI Detection (REAL SCORES) - Do this BEFORE saving history
         let aiDetection = { score: 0, reason: "Analysis unavailable", language: 'English' };
@@ -262,33 +267,38 @@ exports.checkPlagiarism = async (req, res) => {
         // Combined Risk Score: 50% Plagiarism + 50% AI
         const riskScore = Math.round((plagiarismScore * 0.5) + (safeAiScore * 0.5));
 
-        // Save to History with the COMBINED riskScore (not just plagiarismScore)
-        const historyEntry = new History({
-            userId: user._id,
-            originalText: text,
-            highlights,
-            overallScore: riskScore,
-        });
+        // Save to History (only for logged-in users)
+        let historyId = null;
+        if (user) {
+            const historyEntry = new History({
+                userId: user._id,
+                originalText: text,
+                highlights,
+                overallScore: riskScore,
+            });
 
-        await historyEntry.save();
+            await historyEntry.save();
+            historyId = historyEntry._id;
 
-        // Dispatch Webhook (Fire and Forget)
-        const webhookPayload = {
-            id: historyEntry._id,
-            textSnippet: text.substring(0, 100) + '...',
-            score: riskScore,
-            aiScore: safeAiScore,
-            plagiarismScore: plagiarismScore,
-            language: finalLanguage,
-            highlightsCount: highlights.length,
-            completedAt: new Date().toISOString()
-        };
+            // Dispatch Webhook (Fire and Forget) - only for logged-in users
+            const webhookPayload = {
+                id: historyEntry._id,
+                textSnippet: text.substring(0, 100) + '...',
+                score: riskScore,
+                aiScore: safeAiScore,
+                plagiarismScore: plagiarismScore,
+                language: finalLanguage,
+                highlightsCount: highlights.length,
+                completedAt: new Date().toISOString()
+            };
 
-        webhookService.dispatch(req.user._id, 'analysis.completed', webhookPayload).catch(err => {
-            console.error('Webhook dispatch failed:', err.message);
-        });
+            webhookService.dispatch(user._id, 'analysis.completed', webhookPayload).catch(err => {
+                console.error('Webhook dispatch failed:', err.message);
+            });
+        }
 
-        res.json({
+        // Build response
+        const response = {
             overallScore: riskScore, // Combined risk score
             plagarismScore: plagiarismScore, // REAL plagiarism score
             aiScore: safeAiScore, // REAL AI detection score
@@ -296,21 +306,27 @@ exports.checkPlagiarism = async (req, res) => {
             language: finalLanguage,
             highlights,
             matches: Array.from(sourcesFound.values()),
-            id: historyEntry._id,
-            usage: {
+            id: historyId,
+        };
+
+        // Add usage and gamification for logged-in users only
+        if (user && updatedStatus) {
+            response.usage = {
                 remaining: updatedStatus.remaining,
                 limit: updatedStatus.limit,
                 isDaily: updatedStatus.isDaily,
                 dailyUsageCount: user.dailyUsageCount,
                 totalUsageCount: user.usageCount,
-            },
-            gamification: {
+            };
+            response.gamification = {
                 currentStreak: gamificationResult.streak?.currentStreak || 0,
                 longestStreak: gamificationResult.streak?.longestStreak || 0,
                 totalAnalyses: gamificationResult.streak?.totalAnalyses || 0,
                 newBadges: gamificationResult.newBadges || [],
-            },
-        });
+            };
+        }
+
+        res.json(response);
 
     } catch (error) {
         console.error('Analysis Error:', error);
