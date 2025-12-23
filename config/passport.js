@@ -7,7 +7,7 @@ passport.use(
         {
             clientID: process.env.GOOGLE_CLIENT_ID,
             clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-            callbackURL: `${process.env.BACKEND_URL || 'https://plagzap-backend-2.onrender.com'}/api/auth/google/callback`,
+            callbackURL: `${process.env.BACKEND_URL || 'https://plagzapbackend-production.up.railway.app'}/api/auth/google/callback`,
         },
         async (accessToken, refreshToken, profile, done) => {
             try {
