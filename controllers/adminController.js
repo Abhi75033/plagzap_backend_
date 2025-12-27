@@ -98,6 +98,40 @@ const updateUserRole = async (req, res) => {
     }
 };
 
+// Manually verify user email (admin only)
+const verifyUserEmail = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const user = await User.findById(id);
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        console.log(`[Admin] Manually verifying email for: ${user.email}`);
+        console.log(`   Current status: ${user.emailVerified}`);
+
+        user.emailVerified = true;
+        user.emailVerificationToken = undefined;
+        user.emailVerificationExpires = undefined;
+        await user.save();
+
+        console.log(`   New status: ${user.emailVerified}`);
+
+        res.json({
+            message: 'Email verified successfully',
+            user: {
+                id: user._id,
+                email: user.email,
+                emailVerified: user.emailVerified
+            }
+        });
+    } catch (error) {
+        console.error('Manual email verification error:', error);
+        res.status(500).json({ error: 'Failed to verify email' });
+    }
+};
+
 // Grant free subscription to user
 const grantSubscription = async (req, res) => {
     try {
@@ -440,19 +474,33 @@ const sendPromotionalEmail = async (req, res) => {
         console.log('📧 Starting to send promotional emails to', users.length, 'users...');
         console.log('📧 Users to email:', users.map(u => u.email));
 
-        const results = await emailService.sendBulkPromotionalEmail(
-            users,
-            subject,
-            message,
-            ctaText,
-            ctaUrl,
-            couponCode
-        );
+        let results;
+        try {
+            results = await emailService.sendBulkPromotionalEmail(
+                users,
+                subject,
+                message,
+                ctaText,
+                ctaUrl,
+                couponCode
+            );
+        } catch (emailError) {
+            console.error('❌ Bulk email send error:', emailError);
+            return res.status(500).json({
+                error: 'Failed to send promotional emails',
+                details: emailError.message
+            });
+        }
 
         console.log('📧 Email send results:', results);
 
         const successful = results.filter(r => r.success).length;
         const failed = results.filter(r => !r.success).length;
+        const failedEmails = results.filter(r => !r.success).map(r => ({ email: r.email, error: r.error }));
+
+        if (failedEmails.length > 0) {
+            console.log('❌ Failed emails:', failedEmails);
+        }
 
         console.log(`✅ Promotional email completed: ${successful} success, ${failed} failed`);
 
@@ -491,6 +539,7 @@ module.exports = {
     getAllUsers,
     deleteUser,
     updateUserRole,
+    verifyUserEmail, // NEW: Manual email verification
     grantSubscription,
     updateSubscriptionStatus,
     revokeSubscription,

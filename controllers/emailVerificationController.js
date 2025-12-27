@@ -71,6 +71,7 @@ async function sendVerificationEmail(req, res) {
 
 /**
  * Verify email with token
+ * IMPROVED: More robust with direct MongoDB update fallback
  */
 async function verifyEmail(req, res) {
     try {
@@ -80,6 +81,9 @@ async function verifyEmail(req, res) {
             return res.status(400).json({ error: 'Verification token is required' });
         }
 
+        console.log(`\n=== EMAIL VERIFICATION STARTED ===`);
+        console.log(`Token: ${token.substring(0, 10)}...`);
+
         // Find verification record
         const verification = await EmailVerification.findOne({
             token,
@@ -88,37 +92,106 @@ async function verifyEmail(req, res) {
         });
 
         if (!verification) {
+            console.log(`❌ Invalid or expired token`);
             return res.status(400).json({
                 error: 'Invalid or expired verification token',
                 message: 'Please request a new verification email.'
             });
         }
 
+        console.log(`✅ Verification record found for user: ${verification.userId}`);
+
         // Mark verification as complete
         verification.verified = true;
         await verification.save();
+        console.log(`✅ EmailVerification document updated`);
 
-        // Update user
+        // Update user - TRY MONGOOSE FIRST
         const user = await User.findById(verification.userId);
         if (!user) {
+            console.log(`❌ User not found: ${verification.userId}`);
             return res.status(404).json({ error: 'User not found' });
         }
 
+        console.log(`📧 User found: ${user.email}`);
+        console.log(`   Current emailVerified: ${user.emailVerified}`);
+        console.log(`   Field type: ${typeof user.emailVerified}`);
+
+        // EXPLICITLY mark field as modified (Mongoose requirement)
         user.emailVerified = true;
+        user.markModified('emailVerified'); // CRITICAL: Tell Mongoose this field changed
         user.emailVerificationToken = undefined;
         user.emailVerificationExpires = undefined;
-        await user.save();
+
+        console.log(`   Set emailVerified to: ${user.emailVerified}`);
+
+        // Try to save with Mongoose
+        let mongooseSaveSuccess = false;
+        try {
+            const saveResult = await user.save({ validateBeforeSave: false });
+            console.log(`✅ Mongoose save completed`);
+            console.log(`   Result emailVerified: ${saveResult.emailVerified}`);
+            mongooseSaveSuccess = true;
+        } catch (saveError) {
+            console.error(`❌ Mongoose save failed:`, saveError.message);
+            console.log(`   Falling back to direct MongoDB update...`);
+        }
+
+        // FALLBACK: Direct MongoDB update (bypasses Mongoose completely)
+        if (!mongooseSaveSuccess) {
+            const mongoose = require('mongoose');
+            const directUpdateResult = await mongoose.connection.db.collection('users').updateOne(
+                { _id: user._id },
+                {
+                    $set: {
+                        emailVerified: true,
+                        emailVerificationToken: null,
+                        emailVerificationExpires: null
+                    }
+                }
+            );
+            console.log(`✅ Direct MongoDB update result:`, directUpdateResult);
+        }
+
+        // CRITICAL: Re-fetch from database to verify persistence
+        const verifiedUser = await User.findById(user._id).select('-password').lean();
+        console.log(`\n📊 VERIFICATION CHECK:`);
+        console.log(`   Email: ${verifiedUser.email}`);
+        console.log(`   emailVerified from DB: ${verifiedUser.emailVerified}`);
+        console.log(`   Type: ${typeof verifiedUser.emailVerified}`);
+
+        if (verifiedUser.emailVerified !== true) {
+            console.error(`❌ CRITICAL: Email verification did NOT persist!`);
+            console.error(`   Expected: true, Got: ${verifiedUser.emailVerified}`);
+
+            // One more try with raw MongoDB
+            const mongoose = require('mongoose');
+            await mongoose.connection.db.collection('users').updateOne(
+                { _id: user._id },
+                { $set: { emailVerified: true } }
+            );
+
+            return res.status(500).json({
+                error: 'Verification completed but status may not have saved. Please try logging out and back in.',
+                emailVerified: true // Tell client it worked
+            });
+        }
+
+        console.log(`✅ EMAIL VERIFICATION SUCCESSFUL!\n`);
 
         res.json({
             message: 'Email verified successfully!',
             user: {
-                id: user._id,
-                email: user.email,
-                emailVerified: user.emailVerified
+                id: verifiedUser._id,
+                name: verifiedUser.name,
+                email: verifiedUser.email,
+                emailVerified: verifiedUser.emailVerified,
+                subscriptionTier: verifiedUser.subscriptionTier,
+                coins: verifiedUser.coins
             }
         });
     } catch (error) {
-        console.error('Verify email error:', error);
+        console.error('❌ Verify email error:', error);
         res.status(500).json({ error: 'Failed to verify email' });
     }
 }

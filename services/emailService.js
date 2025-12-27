@@ -425,7 +425,7 @@ const getPromotionalEmailTemplate = (userName, subject, message, ctaText, ctaUrl
             Hello ${userName},
         </div>
 
-        <div style="margin: 0 0 20px 0; color: #b0b0b0; font-size: 16px; line-height: 1.6; white-space: pre-wrap; font-family: 'Inter', sans-serif;">${message}</div>
+        <div style="margin: 0 0 20px 0; color: #b0b0b0; font-size: 16px; line-height: 1.6; font-family: 'Inter', sans-serif;">${message}</div>
 
         ${couponSection}
         <div style="text-align: center; margin-top: 30px;">

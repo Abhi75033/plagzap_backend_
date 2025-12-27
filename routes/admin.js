@@ -5,6 +5,7 @@ const {
     getAllUsers,
     deleteUser,
     updateUserRole,
+    verifyUserEmail, // NEW: Manual email verification
     grantSubscription,
     updateSubscriptionStatus,
     revokeSubscription,
@@ -34,6 +35,7 @@ router.get('/stats', getStats);
 router.get('/users', getAllUsers);
 router.delete('/users/:id', deleteUser);
 router.patch('/users/:id/role', updateUserRole);
+router.post('/users/:id/verify-email', verifyUserEmail); // NEW: Manual email verification
 
 // Subscription management routes
 router.post('/users/:id/subscription', grantSubscription);

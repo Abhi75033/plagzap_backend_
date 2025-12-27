@@ -222,7 +222,7 @@ exports.checkPlagiarism = async (req, res) => {
 
             // Check for achievements (Phase 5)
             const AchievementService = require('../services/achievementService');
-            const LeaderboardService = require('../services/leaderboard Service');
+            const LeaderboardService = require('../services/leaderboardService');
 
             try {
                 const newlyUnlocked = await AchievementService.checkAchievements(user._id, 'scan', {

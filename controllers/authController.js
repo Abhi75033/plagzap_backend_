@@ -163,6 +163,7 @@ exports.login = async (req, res) => {
                 id: user._id,
                 name: user.name,
                 email: user.email,
+                emailVerified: user.emailVerified, // CRITICAL: Return email verification status
                 subscriptionTier: user.subscriptionTier,
                 subscriptionExpiry: user.subscriptionExpiry,
                 usageCount: user.usageCount,
@@ -184,6 +185,7 @@ exports.me = async (req, res) => {
             id: user._id,
             name: user.name,
             email: user.email,
+            emailVerified: user.emailVerified, // CRITICAL: Return email verification status
             subscriptionTier: user.subscriptionTier,
             subscriptionExpiry: user.subscriptionExpiry,
             usageCount: user.usageCount,
