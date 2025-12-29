@@ -31,6 +31,17 @@ const auth = require('./middleware/auth');
 console.log('Loaded auth middleware');
 const adminAuth = require('./middleware/adminAuth');
 console.log('Loaded adminAuth middleware');
+const blogRoutes = require('./routes/blog');
+console.log('Loaded blogRoutes');
+const newsRoutes = require('./routes/news');
+console.log('Loaded newsRoutes');
+const newsCommentsRoutes = require('./routes/newsComments');
+console.log('Loaded newsCommentsRoutes');
+const notificationRoutes = require('./routes/notifications');
+console.log('Loaded notificationRoutes');
+const jobsRoutes = require('./routes/jobs');
+const applicationsRoutes = require('./routes/applications');
+const contactRoutes = require('./routes/contact');
 
 const app = express();
 
@@ -71,6 +82,9 @@ app.use((req, res, next) => {
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/subscriptions', subscriptionRoutes);
+app.use('/api/jobs', jobsRoutes);
+app.use('/api/applications', applicationsRoutes);
+app.use('/api/contact', contactRoutes);
 app.use('/api/rewards', rewardsRoutes); // Rewards system routes (Phase 1)
 app.use('/api/referrals', referralRoutes); // Phase 2: Referrals
 app.use('/api/admin', auth, adminAuth, adminRoutes); // Protect all admin routes (MOVED UP)
@@ -80,6 +94,12 @@ app.use('/api/leaderboard', leaderboardRoutes); // Phase 5: Leaderboards
 app.use('/api/meetings', require('./routes/meetings')); // Video meeting routes
 app.use('/api', apiRoutes);
 app.use('/api/webhooks', webhookRoutes);
+app.use('/api/blogs', blogRoutes); // Public blog routes
+app.use('/api/news', newsRoutes); // Public news routes
+app.use('/api/news', newsCommentsRoutes); // News comments routes
+app.use('/api/notifications', notificationRoutes); // User notifications
+app.use('/api/jobs', require('./routes/jobs')); // Job postings
+app.use('/api/applications', require('./routes/applications')); // Job applications
 
 // TEST EMAIL ENDPOINT (temporary - for debugging)
 app.post('/api/test-email', async (req, res) => {

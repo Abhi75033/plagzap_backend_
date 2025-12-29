@@ -688,5 +688,8 @@ module.exports = {
         `;
 
         return sendEmail(email, '✅ Password Successfully Changed - PlagZap', html);
-    }
+    },
+
+    // Export sendEmail for direct use
+    sendEmail
 };

@@ -25,6 +25,21 @@ const {
     updatePromoSettings,
 } = require('../controllers/promoSettingsController');
 
+const {
+    getAdminBlogs,
+    createBlog,
+    updateBlog,
+    deleteBlog,
+    toggleFeatured
+} = require('../controllers/blogController');
+
+const {
+    getAdminNews,
+    createNews,
+    updateNews,
+    deleteNews
+} = require('../controllers/newsController');
+
 // All routes here are protected by auth + adminAuth in app.js
 
 // Promotional banner settings (Moved to top for priority)
@@ -53,5 +68,18 @@ router.post('/emails/promotional', sendPromotionalEmail);
 
 // Price management
 router.get('/prices', getPrices);
+
+// Blog management routes
+router.get('/blogs', getAdminBlogs);
+router.post('/blogs', createBlog);
+router.put('/blogs/:id', updateBlog);
+router.delete('/blogs/:id', deleteBlog);
+router.patch('/blogs/:id/featured', toggleFeatured);
+
+// News management routes
+router.get('/news', getAdminNews);
+router.post('/news', createNews);
+router.put('/news/:id', updateNews);
+router.delete('/news/:id', deleteNews);
 
 module.exports = router;
