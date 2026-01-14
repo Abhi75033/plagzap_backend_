@@ -211,79 +211,82 @@ const sendToAllUsers = async (req, res) => {
 
         await Notification.insertMany(notifications);
 
-        // Send emails to all users asynchronously (don't block response)
-        const emailPromises = users.map(user => {
-            const emailHtml = `
-                <!DOCTYPE html>
-                <html>
-                <head>
-                    <style>
-                        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; background: #f4f4f4; margin: 0; padding: 0; }
-                        .container { max-width: 600px; margin: 20px auto; background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-                        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px 20px; text-align: center; color: white; }
-                        .header h1 { margin: 0; font-size: 28px; }
-                        .content { padding: 40px 30px; }
-                        .notification-box { background: #f8f9fa; padding: 25px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #667eea; }
-                        .notification-title { font-weight: bold; font-size: 18px; color: #667eea; margin-bottom: 10px; }
-                        .notification-message { color: #666; font-size: 15px; line-height: 1.6; }
-                        .button { display: inline-block; padding: 12px 30px; background: #667eea; color: white; text-decoration: none; border-radius: 6px; font-weight: bold; margin-top: 20px; }
-                        .footer { text-align: center; padding: 20px; background: #f9f9f9; color: #999; font-size: 12px; }
-                    </style>
-                </head>
-                <body>
-                    <div class="container">
-                        <div class="header">
-                            <h1>🔔 New Notification</h1>
-                        </div>
-                        <div class="content">
-                            <p>Hi <strong>${user.name || 'there'}</strong>,</p>
-                            <p>You have a new notification from PlagZap:</p>
-                            
-                            <div class="notification-box">
-                                <div class="notification-title">${notificationData.title}</div>
-                                <div class="notification-message">${notificationData.message}</div>
-                            </div>
-
-                            ${notificationData.link ? `
-                            <p style="text-align: center;">
-                                <a href="${process.env.FRONTEND_URL || process.env.CLIENT_URL || 'https://plag-zap-frontend.vercel.app'}${notificationData.link}" class="button">
-                                    View Details
-                                </a>
-                            </p>
-                            ` : ''}
-
-                            <p style="margin-top: 30px; color: #666; font-size: 14px;">
-                                You can also view this notification in your <a href="${process.env.FRONTEND_URL || process.env.CLIENT_URL || 'https://plag-zap-frontend.vercel.app'}/dashboard" style="color: #667eea;">dashboard</a>.
-                            </p>
-                        </div>
-                        <div class="footer">
-                            <p>&copy; ${new Date().getFullYear()} PlagZap. All rights reserved.</p>
-                            <p>This is an automated notification email.</p>
-                        </div>
-                    </div>
-                </body>
-                </html>
-            `;
-
-            return sendEmail(user.email, `🔔 ${notificationData.title}`, emailHtml).catch(err => {
-                console.error(`Failed to send notification email to ${user.email}:`, err);
-                return { success: false, email: user.email, error: err.message };
-            });
-        });
-
-        // Don't await all emails, send in background
-        Promise.all(emailPromises).then(results => {
-            const successCount = results.filter(r => r.success).length;
-            const failureCount = results.filter(r => !r.success).length;
-            console.log(`✅ Emails sent: ${successCount} successful, ${failureCount} failed`);
-        }).catch(err => {
-            console.error('Email batch error:', err);
-        });
-
+        // Send response immediately
         res.json({
             message: `Notification sent to ${users.length} user(s) in "${targetAudience}" audience`,
             count: users.length,
             audience: targetAudience
+        });
+
+        // Send emails AFTER response is sent (use setImmediate to defer)
+        setImmediate(() => {
+            const emailPromises = users.map(user => {
+                const emailHtml = `
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <style>
+                            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; background: #f4f4f4; margin: 0; padding: 0; }
+                            .container { max-width: 600px; margin: 20px auto; background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+                            .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px 20px; text-align: center; color: white; }
+                            .header h1 { margin: 0; font-size: 28px; }
+                            .content { padding: 40px 30px; }
+                            .notification-box { background: #f8f9fa; padding: 25px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #667eea; }
+                            .notification-title { font-weight: bold; font-size: 18px; color: #667eea; margin-bottom: 10px; }
+                            .notification-message { color: #666; font-size: 15px; line-height: 1.6; }
+                            .button { display: inline-block; padding: 12px 30px; background: #667eea; color: white; text-decoration: none; border-radius: 6px; font-weight: bold; margin-top: 20px; }
+                            .footer { text-align: center; padding: 20px; background: #f9f9f9; color: #999; font-size: 12px; }
+                        </style>
+                    </head>
+                    <body>
+                        <div class="container">
+                            <div class="header">
+                                <h1>🔔 New Notification</h1>
+                            </div>
+                            <div class="content">
+                                <p>Hi <strong>${user.name || 'there'}</strong>,</p>
+                                <p>You have a new notification from PlagZap:</p>
+                                
+                                <div class="notification-box">
+                                    <div class="notification-title">${notificationData.title}</div>
+                                    <div class="notification-message">${notificationData.message}</div>
+                                </div>
+
+                                ${notificationData.link ? `
+                                <p style="text-align: center;">
+                                    <a href="${process.env.FRONTEND_URL || process.env.CLIENT_URL || 'https://plag-zap-frontend.vercel.app'}${notificationData.link}" class="button">
+                                        View Details
+                                    </a>
+                                </p>
+                                ` : ''}
+
+                                <p style="margin-top: 30px; color: #666; font-size: 14px;">
+                                    You can also view this notification in your <a href="${process.env.FRONTEND_URL || process.env.CLIENT_URL || 'https://plag-zap-frontend.vercel.app'}/dashboard" style="color: #667eea;">dashboard</a>.
+                                </p>
+                            </div>
+                            <div class="footer">
+                                <p>&copy; ${new Date().getFullYear()} PlagZap. All rights reserved.</p>
+                                <p>This is an automated notification email.</p>
+                            </div>
+                        </div>
+                    </body>
+                    </html>
+                `;
+
+                return sendEmail(user.email, `🔔 ${notificationData.title}`, emailHtml).catch(err => {
+                    console.error(`Failed to send notification email to ${user.email}:`, err.message);
+                    return { success: false, email: user.email, error: err.message };
+                });
+            });
+
+            // Process all emails asynchronously
+            Promise.all(emailPromises).then(results => {
+                const successCount = results.filter(r => r && r.success).length;
+                const failureCount = results.filter(r => r && !r.success).length;
+                console.log(`✅ Notification emails: ${successCount} sent, ${failureCount} failed out of ${users.length} total`);
+            }).catch(err => {
+                console.error('Email batch processing error:', err);
+            });
         });
     } catch (error) {
         console.error('Send to all users error:', error);
