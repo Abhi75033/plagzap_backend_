@@ -195,28 +195,41 @@ const sendToAllUsers = async (req, res) => {
                 break;
         }
 
+        console.log(`[NOTIFICATION] Starting send to "${targetAudience}" audience`);
+        console.log(`[NOTIFICATION] User query:`, JSON.stringify(userQuery));
+
         // Get filtered users with email and name for email sending
+        console.log(`[NOTIFICATION] Querying users...`);
         const users = await User.find(userQuery, '_id email name');
+        console.log(`[NOTIFICATION] Found ${users.length} users`);
 
         if (users.length === 0) {
+            console.log(`[NOTIFICATION] No users found, returning error`);
             return res.status(400).json({ error: 'No users found matching the target audience' });
         }
 
         // Create notifications for filtered users
+        console.log(`[NOTIFICATION] Creating ${users.length} notification documents...`);
         const notifications = users.map(user => ({
             ...notificationData,
             userId: user._id,
             createdBy: req.user._id
         }));
 
+        console.log(`[NOTIFICATION] Inserting ${notifications.length} notifications into database...`);
+        const insertStartTime = Date.now();
         await Notification.insertMany(notifications);
+        const insertDuration = Date.now() - insertStartTime;
+        console.log(`[NOTIFICATION] Database insert completed in ${insertDuration}ms`);
 
         // Send response immediately
+        console.log(`[NOTIFICATION] Sending HTTP response...`);
         res.json({
             message: `Notification sent to ${users.length} user(s) in "${targetAudience}" audience`,
             count: users.length,
             audience: targetAudience
         });
+        console.log(`[NOTIFICATION] HTTP response sent successfully`);
 
         // Send emails AFTER response is sent (use setImmediate to defer)
         setImmediate(() => {
