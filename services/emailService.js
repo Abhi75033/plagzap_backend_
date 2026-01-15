@@ -466,89 +466,148 @@ const sendEmail = async (to, subject, htmlContent) => {
     }
 };
 
-// Export functions
-module.exports = {
-    sendWelcomeEmail: async (email, userName) => {
-        const html = getWelcomeEmailTemplate(userName);
-        return sendEmail(email, '🎉 Welcome to PlagZap!', html);
-    },
+// ==========================================
+// EMAIL FUNCTIONS
+// ==========================================
 
-    sendSubscriptionGrantedEmail: async (email, userName, tier, expiry) => {
-        const html = getSubscriptionGrantedTemplate(userName, tier, expiry);
-        return sendEmail(email, '🎁 Your Premium Subscription is Active!', html);
-    },
+// 1. Welcome Email
+const sendWelcomeEmail = async (email, userName) => {
+    const html = getWelcomeEmailTemplate(userName);
+    return sendEmail(email, '🎉 Welcome to PlagZap!', html);
+};
 
-    sendSubscriptionPausedEmail: async (email, userName) => {
-        const html = getSubscriptionPausedTemplate(userName);
-        return sendEmail(email, '⏸️ Your Subscription has been Paused', html);
-    },
+// 2. Trial Expiry Warning
+const sendTrialExpiryEmail = async (email, userName) => {
+    const html = getTrialEndingTemplate(userName);
+    return sendEmail(email, 'Your PlagZap Trial is Ending Soon ⏳', html);
+};
 
-    sendSubscriptionSuspendedEmail: async (email, userName) => {
-        const html = getSubscriptionSuspendedTemplate(userName);
-        return sendEmail(email, '🚫 Your Subscription has been Suspended', html);
-    },
+// 3. Subscription Confirmation
+const sendSubscriptionSuccessEmail = async (email, userName, planName) => {
+    const html = getSubscriptionSuccessTemplate(userName, planName);
+    return sendEmail(email, '🎉 Welcome to PlagZap Premium!', html);
+};
 
-    sendSubscriptionResumedEmail: async (email, userName, tier) => {
-        const html = getSubscriptionResumedTemplate(userName, tier);
-        return sendEmail(email, '✅ Your Subscription is Active Again!', html);
-    },
+// 4. Low Credits Warning
+const sendCreditsLowEmail = async (email, userName) => {
+    const html = getLowCreditsTemplate(userName);
+    return sendEmail(email, '⚠️ Running Low on PlagZap Credits', html);
+};
 
-    // Standard Generic Promotional Email
-    sendPromotionalEmail: async (email, userName, subject, message, ctaText, ctaUrl, couponCode) => {
-        const html = getPromotionalEmailTemplate(userName, subject, message, ctaText, ctaUrl, couponCode);
-        return sendEmail(email, subject, html);
-    },
+// 5. New Login Alert
+const sendLoginAlertEmail = async (email, userName, deviceInfo) => {
+    const html = getLoginAlertTemplate(userName, deviceInfo);
+    return sendEmail(email, '🔐 New Login Detected', html);
+};
 
-    // SPECIAL: "FIRST50" Campaign Email
-    sendFirst50PromoEmail: async (email, userName) => {
-        const html = getFirst50PromoTemplate(userName);
-        return sendEmail(email, '🔥 Special Offer: Premium for ₹49!', html);
-    },
+// 6. Contact Form Submission (to admin usually, or auto-reply)
+const sendContactFormEmail = async (name, email, subject, message) => {
+    const html = `
+        <h3>New Contact Form Submission</h3>
+        <p><strong>Name:</strong> ${name}</p>
+        <p><strong>Email:</strong> ${email}</p>
+        <p><strong>Subject:</strong> ${subject}</p>
+        <p><strong>Message:</strong></p>
+        <blockquote style="background: #f0f0f0; padding: 10px; border-left: 4px solid #333;">${message}</blockquote>
+    `;
+    return sendEmail(process.env.SMTP_USER, `Contact Form: ${subject}`, html);
+};
 
-    // Email Verification
-    sendVerificationEmail: async (user, token) => {
-        const frontendUrl = process.env.FRONTEND_URL || process.env.CLIENT_URL || 'http://localhost:5173';
-        const verificationUrl = `${frontendUrl}/verify-email?token=${token}`;
+// 7. Admin Notification
+const sendAdminNotificationEmail = async (name, email, subject, message) => {
+    const html = `
+        <h3>Admin Alert: New User Inquiry</h3>
+        <p><strong>User:</strong> ${name} (${email})</p>
+        <p><strong>Subject:</strong> ${subject}</p>
+        <p><strong>Message:</strong> ${message}</p>
+    `;
+    return sendEmail(process.env.SMTP_USER, `[Admin] New Inquiry: ${subject}`, html);
+};
 
-        const content = `
-            <h2 style="margin: 0 0 20px 0; color: #ffffff; font-size: 24px; font-weight: 600;">
-                Verify Your Email Address 📧
-            </h2>
-            <p style="margin: 0 0 20px 0; color: #b0b0b0; font-size: 16px; line-height: 1.6;">
-                Hello ${user.name},<br><br>
-                Thanks for signing up! Please verify your email address to unlock all features including rewards and referrals.
+// 8. Admin Grant Subscription
+const sendSubscriptionGrantedEmail = async (email, name, tier, expiry) => {
+    const html = getSubscriptionGrantedTemplate(name, tier, expiry);
+    return sendEmail(email, '🎁 Your Premium Subscription is Active!', html);
+};
+
+// 9. Subscription Paused
+const sendSubscriptionPausedEmail = async (email, userName) => {
+    const html = getSubscriptionPausedTemplate(userName);
+    return sendEmail(email, '⏸️ Your Subscription has been Paused', html);
+};
+
+// 10. Subscription Suspended
+const sendSubscriptionSuspendedEmail = async (email, userName) => {
+    const html = getSubscriptionSuspendedTemplate(userName);
+    return sendEmail(email, '🚫 Your Subscription has been Suspended', html);
+};
+
+// 11. Subscription Resumed
+const sendSubscriptionResumedEmail = async (email, userName, tier) => {
+    const html = getSubscriptionResumedTemplate(userName, tier);
+    return sendEmail(email, '✅ Your Subscription is Active Again!', html);
+};
+
+// 12. Standard Generic Promotional Email
+const sendPromotionalEmail = async (email, userName, subject, message, ctaText, ctaUrl, couponCode) => {
+    const html = getPromotionalEmailTemplate(userName, subject, message, ctaText, ctaUrl, couponCode);
+    return sendEmail(email, subject, html);
+};
+
+// 13. SPECIAL: "FIRST50" Campaign Email
+const sendFirst50PromoEmail = async (email, userName) => {
+    const html = getFirst50PromoTemplate(userName);
+    return sendEmail(email, '🔥 Special Offer: Premium for ₹49!', html);
+};
+
+// 14. Email Verification
+const sendVerificationEmail = async (user, token) => {
+    const frontendUrl = process.env.FRONTEND_URL || process.env.CLIENT_URL || 'http://localhost:5173';
+    const verificationUrl = `${frontendUrl}/verify-email?token=${token}`;
+
+    const content = `
+        <h2 style="margin: 0 0 20px 0; color: #ffffff; font-size: 24px; font-weight: 600;">
+            Verify Your Email Address 📧
+        </h2>
+        <p style="margin: 0 0 20px 0; color: #b0b0b0; font-size: 16px; line-height: 1.6;">
+            Hello ${user.name},<br><br>
+            Thanks for signing up! Please verify your email address to unlock all features including rewards and referrals.
+        </p>
+        <div style="background: rgba(139, 92, 246, 0.1); border: 1px solid rgba(139, 92, 246, 0.2); padding: 25px; border-radius: 12px; margin: 25px 0;">
+            <p style="margin: 0 0 15px 0; color: #a78bfa; font-size: 16px; font-weight: 600;">
+                ✨ What you'll unlock:
             </p>
-            <div style="background: rgba(139, 92, 246, 0.1); border: 1px solid rgba(139, 92, 246, 0.2); padding: 25px; border-radius: 12px; margin: 25px 0;">
-                <p style="margin: 0 0 15px 0; color: #a78bfa; font-size: 16px; font-weight: 600;">
-                    ✨ What you'll unlock:
-                </p>
-                <ul style="margin: 0; padding-left: 20px; color: #d4d4d8; font-size: 15px; line-height: 1.8;">
-                    <li>Earn coins through daily streaks</li>
-                    <li>Claim milestone rewards</li>
-                    <li>Refer friends and earn bonuses</li>
-                    <li>Redeem coins for premium features</li>
-                </ul>
-            </div>
-            <div style="text-align: center; margin: 30px 0;">
-                <a href="${verificationUrl}" 
-                   style="display: inline-block; background: linear-gradient(135deg, #8b5cf6 0%, #a78bfa 100%); color: #ffffff; text-decoration: none; padding: 16px 40px; border-radius: 12px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);">
-                    Verify Email Address
-                </a>
-            </div>
-            <p style="margin: 20px 0 0 0; color: #71717a; font-size: 13px; text-align: center;">
-                This link expires in 24 hours. If you didn't create this account, please ignore this email.
-            </p>
-        `;
+            <ul style="margin: 0; padding-left: 20px; color: #d4d4d8; font-size: 15px; line-height: 1.8;">
+                <li>Earn coins through daily streaks</li>
+                <li>Claim milestone rewards</li>
+                <li>Refer friends and earn bonuses</li>
+                <li>Redeem coins for premium features</li>
+            </ul>
+        </div>
+        <div style="text-align: center; margin: 30px 0;">
+            <a href="${verificationUrl}" 
+               style="display: inline-block; background: linear-gradient(135deg, #8b5cf6 0%, #a78bfa 100%); color: #ffffff; text-decoration: none; padding: 16px 40px; border-radius: 12px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);">
+                Verify Email Address
+            </a>
+        </div>
+        <p style="margin: 20px 0 0 0; color: #71717a; font-size: 13px; text-align: center;">
+            This link expires in 24 hours. If you didn't create this account, please ignore this email.
+        </p>
+    `;
 
-        const html = getBaseTemplate(content, 'Verify Your Email - PlagZap');
-        return sendEmail(user.email, '📧 Verify Your Email - PlagZap', html);
-    },
+    const html = getBaseTemplate(content, 'Verify Your Email - PlagZap');
+    return sendEmail(user.email, '📧 Verify Your Email - PlagZap', html);
+};
 
-    // Bulk send promotional emails
-    sendBulkPromotionalEmail: async (users, subject, message, ctaText, ctaUrl, couponCode) => {
-        const results = [];
-        for (const user of users) {
-            const result = await module.exports.sendPromotionalEmail(
+// 15. Bulk send promotional emails
+const sendBulkPromotionalEmail = async (users, subject, message, ctaText, ctaUrl, couponCode) => {
+    const results = [];
+    console.log(`Sending bulk emails to ${users.length} users...`);
+
+    for (const user of users) {
+        try {
+            // CALLING LOCAL FUNCTION DIRECTLY - SAFE
+            const result = await sendPromotionalEmail(
                 user.email,
                 user.name,
                 subject,
@@ -558,139 +617,156 @@ module.exports = {
                 couponCode
             );
             results.push({ email: user.email, ...result });
-            // Small delay to avoid rate limiting
-            await new Promise(resolve => setTimeout(resolve, 100));
+            console.log(`Email sent to ${user.email}: ${result.success ? 'Success' : 'Failed'}`);
+        } catch (err) {
+            console.error(`Error sending to ${user.email}:`, err);
+            results.push({ email: user.email, success: false, error: err.message });
         }
-        return results;
-    },
 
-    /**
-     * Send Password Reset Email
-     * Secure password reset link with expiry warning
-     */
-    sendPasswordResetEmail: async (email, name, resetUrl) => {
-        const html = `
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <style>
-                    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; background: #f4f4f4; margin: 0; padding: 0; }
-                    .container { max-width: 600px; margin: 20px auto; background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-                    .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px 20px; text-align: center; color: white; }
-                    .header h1 { margin: 0; font-size: 28px; }
-                    .content { padding: 40px 30px; }
-                    .button { display: inline-block; padding: 15px 35px; background: #667eea; color: white; text-decoration: none; border-radius: 8px; margin: 20px 0; font-weight: bold; }
-                    .button:hover { background: #5568d3; }
-                    .footer { text-align: center; padding: 20px; background: #f9f9f9; color: #999; font-size: 12px; }
-                    .warning { background: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin: 20px 0; border-radius: 4px; }
-                    .code-block { background: #f5f5f5; padding: 15px; border-radius: 5px; word-break: break-all; color: #667eea; font-family: monospace; margin: 15px 0; }
-                </style>
-            </head>
-            <body>
-                <div class="container">
-                    <div class="header">
-                        <h1>🔐 Password Reset</h1>
-                    </div>
-                    <div class="content">
-                        <p>Hi <strong>${name}</strong>,</p>
-                        <p>We received a request to reset your password for your PlagZap account.</p>
-                        <p>Click the button below to reset your password:</p>
-                        <p style="text-align: center;">
-                            <a href="${resetUrl}" class="button">Reset Password</a>
-                        </p>
-                        <p>Or copy and paste this link into your browser:</p>
-                        <div class="code-block">${resetUrl}</div>
-                        
-                        <div class="warning">
-                            <strong>⚠️ Security Notice:</strong>
-                            <ul style="margin: 10px 0; padding-left: 20px;">
-                                <li>This link expires in <strong>15 minutes</strong></li>
-                                <li>This link can only be used <strong>once</strong></li>
-                                <li>If you didn't request this, please ignore this email</li>
-                                <li>Your password won't change until you create a new one</li>
-                            </ul>
-                        </div>
-                        
-                        <p style="margin-top: 30px; color: #666; font-size: 14px;">
-                            If you didn't request a password reset, you can safely ignore this email. Your password will remain unchanged.
-                        </p>
-                    </div>
-                    <div class="footer">
-                        <p>&copy; ${new Date().getFullYear()} PlagZap. All rights reserved.</p>
-                        <p>This is an automated email. Please do not reply.</p>
-                    </div>
+        // Small delay to avoid rate limiting
+        await new Promise(resolve => setTimeout(resolve, 100));
+    }
+    return results;
+};
+
+// 16. Send Password Reset Email
+const sendPasswordResetEmail = async (email, name, resetUrl) => {
+    const html = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <style>
+                body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; background: #f4f4f4; margin: 0; padding: 0; }
+                .container { max-width: 600px; margin: 20px auto; background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+                .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px 20px; text-align: center; color: white; }
+                .header h1 { margin: 0; font-size: 28px; }
+                .content { padding: 40px 30px; }
+                .button { display: inline-block; padding: 15px 35px; background: #667eea; color: white; text-decoration: none; border-radius: 8px; margin: 20px 0; font-weight: bold; }
+                .button:hover { background: #5568d3; }
+                .footer { text-align: center; padding: 20px; background: #f9f9f9; color: #999; font-size: 12px; }
+                .warning { background: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin: 20px 0; border-radius: 4px; }
+                .code-block { background: #f5f5f5; padding: 15px; border-radius: 5px; word-break: break-all; color: #667eea; font-family: monospace; margin: 15px 0; }
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="header">
+                    <h1>🔐 Password Reset</h1>
                 </div>
-            </body>
-            </html>
-        `;
-
-        return sendEmail(email, '🔐 Password Reset Request - PlagZap', html);
-    },
-
-    /**
-     * Send Password Changed Confirmation Email
-     * Security notification after successful password reset
-     */
-    sendPasswordChangedEmail: async (email, name) => {
-        const html = `
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <style>
-                    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; background: #f4f4f4; margin: 0; padding: 0; }
-                    .container { max-width: 600px; margin: 20px auto; background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-                    .header { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); padding: 40px 20px; text-align: center; color: white; }
-                    .header h1 { margin: 0; font-size: 28px; }
-                    .content { padding: 40px 30px; }
-                    .footer { text-align: center; padding: 20px; background: #f9f9f9; color: #999; font-size: 12px; }
-                    .alert { background: #d4edda; border-left: 4px solid #28a745; padding: 15px; margin: 20px 0; border-radius: 4px; }
-                    .warning { background: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin: 20px 0; border-radius: 4px; }
-                    .timestamp { background: #f5f5f5; padding: 10px; border-radius: 5px; text-align: center; margin: 20px 0; }
-                </style>
-            </head>
-            <body>
-                <div class="container">
-                    <div class="header">
-                        <h1>✅ Password Changed</h1>
+                <div class="content">
+                    <p>Hi <strong>${name}</strong>,</p>
+                    <p>We received a request to reset your password for your PlagZap account.</p>
+                    <p>Click the button below to reset your password:</p>
+                    <p style="text-align: center;">
+                        <a href="${resetUrl}" class="button">Reset Password</a>
+                    </p>
+                    <p>Or copy and paste this link into your browser:</p>
+                    <div class="code-block">${resetUrl}</div>
+                    
+                    <div class="warning">
+                        <strong>⚠️ Security Notice:</strong>
+                        <ul style="margin: 10px 0; padding-left: 20px;">
+                            <li>This link expires in <strong>15 minutes</strong></li>
+                            <li>This link can only be used <strong>once</strong></li>
+                            <li>If you didn't request this, please ignore this email</li>
+                            <li>Your password won't change until you create a new one</li>
+                        </ul>
                     </div>
-                    <div class="content">
-                        <p>Hi <strong>${name}</strong>,</p>
-                        <p>Your password for your PlagZap account has been successfully changed.</p>
-                        
-                        <div class="alert">
-                            <strong>🔒 Your account is secure</strong>
-                            <p style="margin: 10px 0 0 0;">If you made this change, no further action is needed. You can continue using PlagZap with your new password.</p>
-                        </div>
-                        
-                        <div class="timestamp">
-                            <strong>Changed at:</strong> ${new Date().toLocaleString()}
-                        </div>
-                        
-                        <div class="warning">
-                            <strong>⚠️ Didn't make this change?</strong>
-                            <p style="margin: 10px 0 0 0;">
-                                If you did NOT request this password change, your account may be compromised. 
-                                Please contact our support team immediately at 
-                                <a href="mailto:support@plagzap.com" style="color: #667eea; text-decoration: none; font-weight: bold;">support@plagzap.com</a>
-                            </p>
-                        </div>
-                        
-                        <p style="margin-top: 30px; color: #666; font-size: 14px;">
-                            For your security, we recommend using a strong, unique password and enabling two-factor authentication if available.
+                    
+                    <p style="margin-top: 30px; color: #666; font-size: 14px;">
+                        If you didn't request a password reset, you can safely ignore this email. Your password will remain unchanged.
+                    </p>
+                </div>
+                <div class="footer">
+                    <p>&copy; ${new Date().getFullYear()} PlagZap. All rights reserved.</p>
+                    <p>This is an automated email. Please do not reply.</p>
+                </div>
+            </div>
+        </body>
+        </html>
+    `;
+    return sendEmail(email, '🔐 Password Reset Request - PlagZap', html);
+};
+
+// 17. Send Password Changed Confirmation Email
+const sendPasswordChangedEmail = async (email, name) => {
+    const html = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <style>
+                body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; background: #f4f4f4; margin: 0; padding: 0; }
+                .container { max-width: 600px; margin: 20px auto; background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+                .header { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); padding: 40px 20px; text-align: center; color: white; }
+                .header h1 { margin: 0; font-size: 28px; }
+                .content { padding: 40px 30px; }
+                .footer { text-align: center; padding: 20px; background: #f9f9f9; color: #999; font-size: 12px; }
+                .alert { background: #d4edda; border-left: 4px solid #28a745; padding: 15px; margin: 20px 0; border-radius: 4px; }
+                .warning { background: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin: 20px 0; border-radius: 4px; }
+                .timestamp { background: #f5f5f5; padding: 10px; border-radius: 5px; text-align: center; margin: 20px 0; }
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="header">
+                    <h1>✅ Password Changed</h1>
+                </div>
+                <div class="content">
+                    <p>Hi <strong>${name}</strong>,</p>
+                    <p>Your password for your PlagZap account has been successfully changed.</p>
+                    
+                    <div class="alert">
+                        <strong>🔒 Your account is secure</strong>
+                        <p style="margin: 10px 0 0 0;">If you made this change, no further action is needed. You can continue using PlagZap with your new password.</p>
+                    </div>
+                    
+                    <div class="timestamp">
+                        <strong>Changed at:</strong> ${new Date().toLocaleString()}
+                    </div>
+                    
+                    <div class="warning">
+                        <strong>⚠️ Didn't make this change?</strong>
+                        <p style="margin: 10px 0 0 0;">
+                            If you did NOT request this password change, your account may be compromised. 
+                            Please contact our support team immediately at 
+                            <a href="mailto:support@plagzap.com" style="color: #667eea; text-decoration: none; font-weight: bold;">support@plagzap.com</a>
                         </p>
                     </div>
-                    <div class="footer">
-                        <p>&copy; ${new Date().getFullYear()} PlagZap. All rights reserved.</p>
-                        <p>This is an automated security notification.</p>
-                    </div>
+                    
+                    <p style="margin-top: 30px; color: #666; font-size: 14px;">
+                        For your security, we recommend using a strong, unique password and enabling two-factor authentication if available.
+                    </p>
                 </div>
-            </body>
-            </html>
-        `;
+                <div class="footer">
+                    <p>&copy; ${new Date().getFullYear()} PlagZap. All rights reserved.</p>
+                </div>
+            </div>
+        </body>
+        </html>
+    `;
+    return sendEmail(email, '✅ Password Successfully Changed - PlagZap', html);
+};
 
-        return sendEmail(email, '✅ Password Successfully Changed - PlagZap', html);
-    },
-
-    // Export sendEmail for direct use
-    sendEmail
+// ==========================================
+// EXPORT ALL
+// ==========================================
+module.exports = {
+    sendEmail, // Exposed for direct use if needed
+    sendWelcomeEmail,
+    sendTrialExpiryEmail,
+    sendSubscriptionSuccessEmail,
+    sendCreditsLowEmail,
+    sendLoginAlertEmail,
+    sendContactFormEmail,
+    sendAdminNotificationEmail,
+    sendSubscriptionGrantedEmail,
+    sendSubscriptionPausedEmail,
+    sendSubscriptionSuspendedEmail,
+    sendSubscriptionResumedEmail,
+    sendPromotionalEmail,
+    sendFirst50PromoEmail,
+    sendVerificationEmail,
+    sendBulkPromotionalEmail,
+    sendPasswordResetEmail,
+    sendPasswordChangedEmail
 };
