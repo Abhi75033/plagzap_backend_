@@ -1,6 +1,7 @@
 /**
  * EMAIL SERVICE
  * Handles sending beautiful HTML emails for various events
+ * Version: 2.0 - Fixed config reference issue (2026-01-15)
  */
 
 // Try to load nodemailer, but don't crash if not installed
