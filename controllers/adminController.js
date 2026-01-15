@@ -440,79 +440,59 @@ const sendPromotionalEmail = async (req, res) => {
         console.log('Promotional Email - Target Audience:', targetAudience);
         console.log('Promotional Email - Query:', JSON.stringify(query));
 
-        // Debug: Show all unique subscription tiers in database
-        const allTiers = await User.distinct('subscriptionTier');
-        console.log('DEBUG - All unique subscription tiers in DB:', allTiers);
-
         const users = await User.find(query, { email: 1, name: 1 });
         console.log(`Promotional Email - Found ${users.length} users`);
 
-        // Debug: show first few user emails
-        if (users.length > 0) {
-            console.log('First few users:', users.slice(0, 3).map(u => u.email));
-        } else {
-            // Debug: show what tiers exist in database
-            const tierStats = await User.aggregate([
-                { $group: { _id: '$subscriptionTier', count: { $sum: 1 } } }
-            ]);
-            console.log('DEBUG - Subscription tier distribution:', tierStats);
-        }
-
         if (users.length === 0) {
-            // Get tier stats for better error message
-            const tierStats = await User.aggregate([
-                { $group: { _id: '$subscriptionTier', count: { $sum: 1 } } }
-            ]);
-            console.log('No users found. Tier distribution:', tierStats);
             return res.status(400).json({
-                error: 'No users found in target audience',
-                debug: tierStats
+                error: 'No users found in target audience'
             });
         }
 
-        // Send emails in background
-        console.log('📧 Starting to send promotional emails to', users.length, 'users...');
-        console.log('📧 Users to email:', users.map(u => u.email));
-
-        let results;
-        try {
-            results = await emailService.sendBulkPromotionalEmail(
-                users,
-                subject,
-                message,
-                ctaText,
-                ctaUrl,
-                couponCode
-            );
-        } catch (emailError) {
-            console.error('❌ Bulk email send error:', emailError);
-            return res.status(500).json({
-                error: 'Failed to send promotional emails',
-                details: emailError.message
-            });
-        }
-
-        console.log('📧 Email send results:', results);
-
-        const successful = results.filter(r => r.success).length;
-        const failed = results.filter(r => !r.success).length;
-        const failedEmails = results.filter(r => !r.success).map(r => ({ email: r.email, error: r.error }));
-
-        if (failedEmails.length > 0) {
-            console.log('❌ Failed emails:', failedEmails);
-        }
-
-        console.log(`✅ Promotional email completed: ${successful} success, ${failed} failed`);
-
+        // Send response immediately to prevent timeout
         res.json({
-            message: `Promotional email sent to ${successful} users`,
-            totalSent: successful,
-            totalFailed: failed,
+            message: `Promotional emails queued for ${users.length} users`,
+            totalSent: users.length, // Optimistic count for UI
             targetAudience,
+            status: 'processing'
         });
+
+        console.log('✅ Response sent. Starting background email dispatch...');
+
+        // Send emails in background via setImmediate
+        setImmediate(async () => {
+            console.log('📧 BACKGROUND: Starting to send promotional emails to', users.length, 'users...');
+
+            try {
+                const results = await emailService.sendBulkPromotionalEmail(
+                    users,
+                    subject,
+                    message,
+                    ctaText,
+                    ctaUrl,
+                    couponCode
+                );
+
+                const successful = results.filter(r => r.success).length;
+                const failed = results.filter(r => !r.success).length;
+
+                console.log(`✅ BACKGROUND: Promotional email completed: ${successful} success, ${failed} failed`);
+
+                if (failed > 0) {
+                    const failedEmails = results.filter(r => !r.success).map(r => ({ email: r.email, error: r.error }));
+                    console.log('❌ BACKGROUND: Failed emails:', JSON.stringify(failedEmails));
+                }
+            } catch (emailError) {
+                console.error('❌ BACKGROUND: Bulk email send critical error:', emailError);
+            }
+        });
+
     } catch (error) {
         console.error('Send promotional email error:', error);
-        res.status(500).json({ error: 'Failed to send promotional emails' });
+        // Only send error response if we haven't responded yet
+        if (!res.headersSent) {
+            res.status(500).json({ error: 'Failed to queue promotional emails' });
+        }
     }
 };
 
