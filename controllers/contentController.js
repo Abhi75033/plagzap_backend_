@@ -133,6 +133,24 @@ STRUCTURE:
 5. Conclusion
 
 ${baseInstructions}
+`,
+                cover_letter: `
+You are writing a high-quality, ATS-optimized cover letter for the role of ${req.body.jobRole} at ${req.body.company}.
+Experience: ${req.body.experience || 'Not specified'}
+Key Skills: ${req.body.skills || 'Not specified'}
+
+COVER LETTER WRITING RULES (STRICT):
+1. 100% ORIGINAL & HUMAN-SOUNDING: Avoid generic AI phrases like "I am writing to express my interest", "thrilled to apply", "perfect alignment". Start with a strong, confident opening.
+2. ATS OPTIMIZATION: Naturally weave in the Key Skills (${req.body.skills}) without simply listing them.
+3. TONE: Professional, confident, yet humble and enthusiastic. Match the requested tone: ${tone}.
+4. NO HALLUCINATIONS: Do not invent specific achievements. Use placeholders like "[Mention specific achievement]" if necessary, but prefer focusing on the provided skills and experience.
+5. STRUCTURE:
+   - Opening: State the role clearly, express genuine enthusiasm, and hook the reader.
+   - Middle (1-2 paragraphs): Connect the experience (${req.body.experience}) and skills (${req.body.skills}) to the company's potential needs. Show, don't just tell.
+   - Closing: Reiterate value, confident call to action (interview request), and professional sign-off.
+6. FORMATTING: Short paragraphs (2-3 lines max). No bullet points unless absolutely necessary for skills.
+
+${baseInstructions}
 `
             };
 
