@@ -164,20 +164,20 @@ STRICT RULES:
 1. Return ONLY a valid JSON array of objects.
 2. Do NOT wrap the output in markdown code blocks (no \`\`\`json).
 3. Do NOT include any introductory or concluding text.
-4. Provide 5-7 distinct journal recommendations.
-5. Use "Hybrid/Transformative" or specific dollar ranges for APC.
-6. Use approximate timelines (e.g., "3-6 months").
-
-JSON Structure per object:
-{
-  "name": "Journal Name",
-  "publisher": "Publisher Name",
-  "subjectArea": "Subject Area",
-  "tier": "Q1/Q2/Q3",
-  "apc": "Cost Range",
-  "reviewTimeline": "Timeline",
-  "indexing": "Scopus, etc.",
-  "website": "URL (start with http/https)",
+167: 4. Provide 5-7 distinct journal recommendations.
+168: 5. Use "Hybrid/Transformative" or specific dollar ranges for APC (ALWAYS IN USD).
+169: 6. Use approximate timelines (e.g., "3-6 months").
+170: 
+171: JSON Structure per object:
+172: {
+173:   "name": "Journal Name",
+174:   "publisher": "Publisher Name",
+175:   "subjectArea": "Subject Area",
+176:   "tier": "Q1/Q2/Q3",
+177:   "apc": "Cost Range (USD only, e.g., $2500-$3000)",
+178:   "reviewTimeline": "Timeline",
+179:   "indexing": "Scopus, etc.",
+180:   "website": "URL (start with http/https)",
   "reason": "Why it fits..."
 }
 
