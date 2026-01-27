@@ -1,4 +1,5 @@
 const axios = require('axios');
+const { humanizeContent } = require('../services/ai/rewriteService');
 
 /**
  * Generate content based on mode
@@ -237,8 +238,18 @@ Generate the complete content now:
             }
         );
 
-        const content = response.data.candidates[0].content.parts[0].text;
-        console.log('✅ Content generated successfully, length:', content.length);
+        let content = response.data.candidates[0].content.parts[0].text;
+
+        // AUTO-HUMANIZATION STEP
+        // Pass the rough draft through our advanced "Anti-AI" engine to remove patterns
+        try {
+            console.log('✨ Auto-Humanizing generated draft...');
+            content = await humanizeContent(content);
+        } catch (humanizeError) {
+            console.error('⚠️ Auto-humanization failed, returning raw draft:', humanizeError.message);
+        }
+
+        console.log('✅ Content generated & humanized successfully, length:', content.length);
 
         // Simulate feedback metrics (in production, integrate actual checkers)
         const feedback = {
@@ -302,7 +313,14 @@ exports.generateFromPreset = async (req, res) => {
             { headers: { 'Content-Type': 'application/json' } }
         );
 
-        const content = response.data.candidates[0].content.parts[0].text;
+        let content = response.data.candidates[0].content.parts[0].text;
+
+        // Auto-humanize preset content too
+        try {
+            content = await humanizeContent(content);
+        } catch (e) {
+            console.error('Preset humanization failed', e.message);
+        }
 
         res.json({
             content,
