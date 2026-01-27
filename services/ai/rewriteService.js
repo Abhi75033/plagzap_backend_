@@ -71,13 +71,20 @@ async function runGeminiSoften(text) {
 
 // --- STAGE 3: GEMINI PRO REWRITE (The Destroyer) ---
 // --- STAGE 3: GEMINI PRO REWRITE (The Ghostwriter) ---
+// --- STAGE 3: GEMINI PRO REWRITE (The Imperfect Human) ---
 async function runDeepRewrite(text, customPrompt = null) {
-    logStage("➡️ [Stage 3]", "Gemini 2.0 Flash → Deep Rewrite (Ghostwriter Mode)...");
+    logStage("➡️ [Stage 3]", "Gemini 2.0 Flash → Deep Rewrite (Human Imperfection Mode)...");
 
     const defaultPrompt = `
-    ROLE: Elite Ghostwriter & Editor.
-    TASK: Rewrite the following text to maximize "Perplexity" and "Burstiness" while maintaining perfect coherence. It must read like it was written by a smart, witty human expert.
-
+    ROLE: A Real Person (Not a Writer).
+    TASK: Rewrite this text. Imagine you are typing this out quickly to a friend or on a forum.
+    
+    GOAL:
+    -   **Normalize Imperfection**: Real humans aren't perfect. It's okay to have a run-on sentence. It's okay to start a sentence with "But" or "And".
+    -   **Remove "AI Polish"**: If it flows too perfectly, break it.
+    -   **Use Simple Words**: Don't say "utilize", say "use". Don't say "obtain", say "get".
+    -   **Opinion/Bias**: Add little personal asides like "(I think...)" or "Honestly...".
+    
     🚫 STRICTLY BANNED WORDS (The "AI Dictionary"):
     - "Delve", "Tapestry", "Landscape", "Realm", "Nuance", "Myriad", "Plethora"
     - "Underscore", "Testament", "Pivotal", "Paramount", "Crucial", "Vital"
@@ -88,16 +95,11 @@ async function runDeepRewrite(text, customPrompt = null) {
     - "As an AI language model", "I cannot", "It is important to note"
     - "Aims to", "Seeks to", "Designed to", "Characterized by"
 
-    ✅ HUMAN WRITING RULES (The "Ghostwriter Protocol"):
-    1.  **Idiomatic Phrasing**: Use natural idioms where they fit (e.g., "cut to the chase", "flesh out"). AIs rarely do this well.
-    2.  **Specific Concrete Details**: Don't be abstract. Instead of "challenges were faced", say "we hit a wall".
-    3.  **Active Voice Only**: "Mistakes were made" -> "I messed up".
-    4.  **Varied Sentence Structure**:
-        -   Use rhetorical questions ("So, what’s the point?").
-        -   Use imperative sentences ("Think about it.").
-        -   Use compound-complex sentences mixed with fragments.
-    5.  **Opinionated & Biased**: AIs are neutral. Humans have opinions. Be slightly biased or colorful in your word choice.
-    6.  **Remove Signposting**: Delete "Firstly", "Secondly", "In conclusion". Just flow from one point to the next.
+    ✅ HUMAN FACTOR INSTRUCTIONS:
+    1.  **Grammar Slips**: Occasionally use a fragment. "Just like that."
+    2.  **Conversational Fillers**: Use words like "Well," "So," "Basically," "You know".
+    3.  **Variable Sentence Length**: Write a long, rambling sentence that captures a whole train of thought followed by a short one.
+    4.  **Colloquialisms**: Use "I feel like" instead of "It is my opinion that".
 
     STRICT OUTPUT FORMAT:
     Return valid JSON only: { "rewritten_text": "YOUR REWRITTEN TEXT HERE" }
@@ -108,28 +110,29 @@ async function runDeepRewrite(text, customPrompt = null) {
 
     const finalPrompt = customPrompt || defaultPrompt;
 
-    // Use Temperature 1.1 for Balance (Creativity + Coherence)
-    const result = await runGeminiRewrite(text, finalPrompt, 1.1);
+    // Use Temperature 1.3 for higher variance but grounded in the prompt instructions
+    const result = await runGeminiRewrite(text, finalPrompt, 1.3);
     logStage("   ✅", "Deep Rewrite Complete");
     return result;
 }
 
 // --- REWRITE FLAGGED SENTENCES (Gemini Aggressive) ---
 // --- REWRITE FLAGGED SENTENCES (Gemini Clinical) ---
+// --- REWRITE FLAGGED SENTENCES (Gemini Naturalizer) ---
 async function rewriteSpecificFlaggedParts(text, reason = "AI Detection") {
-    logStage("➡️ [Loop]", `🔥 Gemini → Surgical Rewrite (Reason: ${reason})...`);
+    logStage("➡️ [Loop]", `🔥 Gemini → Naturalize Rewrite (Reason: ${reason})...`);
 
     const aggressivePrompt = `
-    ROLE: Expert Copy Editor (Humanizer).
-    TASK: The previous text was flagged as AI-generated. You need to rewrite it to break the "predictable patterns" while improving the quality.
+    ROLE: Regular Human.
+    TASK: This text sounds like a robot wrote it. Fix it.
+    
+    INSTRUCTIONS:
+    1.  **Break the Patterns**: If it says "Firstly, Secondly, Finally", delete those words. Just say the points.
+    2.  **Add "Human" Noise**: Use words like "Actually," "To be honest," or "Kind of."
+    3.  **Simplify**: If you see a big fancy word, replace it with a normal one.
+    4.  **Sentence Variety**: Short sentence. Long rambling sentence explaining the details. Fragment.
 
-    TACTIC: "Syntactic Reshuffling"
-    1.  **Change Clause Order**: If a sentence is "X because Y", change it to "Since Y, X".
-    2.  **Combine/Split**: Take two medium sentences and make one complex one. Or take one long one and make three short punchy ones.
-    3.  **Inject Personality**: Add a "human touch" - a rhetorical question, a dashed interjection, or a colloquialism.
-    4.  **Check Vocabulary**: Ensure NO "Banned Words" (delve, tapestry, etc.) exist. Replace them with simple Anglo-Saxon words.
-
-    The goal is NOT to destroy the text, but to make it *unpredictable* to an algorithm.
+    GOAL: Make it indiscernible from a Reddit comment or a casual email.
 
     STRICT OUTPUT FORMAT:
     Return valid JSON only: { "rewritten_text": "YOUR REWRITTEN TEXT HERE" }
@@ -138,7 +141,7 @@ async function rewriteSpecificFlaggedParts(text, reason = "AI Detection") {
     "${text}"
     `;
 
-    return runGeminiRewrite(text, aggressivePrompt, 1.2);
+    return runGeminiRewrite(text, aggressivePrompt, 1.4);
 }
 
 // Helper generic Gemini
