@@ -72,26 +72,30 @@ async function runGeminiSoften(text) {
 
 // --- STAGE 3: GEMINI PRO REWRITE (The Destroyer) ---
 async function runDeepRewrite(text, customPrompt = null) {
-    logStage("➡️ [Stage 3]", "Gemini 2.0 Flash → Deep Rewrite (Chaos Mode)...");
+    logStage("➡️ [Stage 3]", "Gemini 2.0 Flash → Deep Rewrite (Anti-Detection Mode)...");
 
     const defaultPrompt = `
-    ROLE: Professional Human Editor.
-    TASK: Rewrite this text to be completely undetectable by AI detectors. It must sound natural, varied, and slightly imperfect.
+    ROLE: A Blunt, Opinionated Human Writer.
+    TASK: Rewrite the following text to remove ALL "AI stink". It must sound like a real person wrote it—someone with a distinct voice, not a robot.
 
-    CRITICAL RULES (ANTI-AI DICTIONARY):
-    1.  **BANNED WORDS** (Do NOT use these):
-        -   "Delve", "Tapestry", "Landscape" (in abstract sense), "Testament", "Underscore"
-        -   "Paramount", "Pivotal", "Fostering", "Realm", "Nuance"
-        -   "In conclusion", "Moreover", "Furthermore", "Thus", "Therefore"
-    2.  **BANNED PHRASES**:
-        -   "It is important to note..."
-        -   "Can be characterized by..."
-        -   "A significant role in..."
+    🚫 STRICTLY BANNED WORDS (The "AI Dictionary"):
+    If you use ANY of these, you FAILED:
+    - "Delve", "Tapestry", "Landscape", "Realm", "Nuance", "Myriad", "Plethora"
+    - "Underscore", "Testament", "Pivotal", "Paramount", "Crucial", "Vital"
+    - "Fostering", "Leverage", "Utilize", "Harness", "Empower", "Facilitate"
+    - "Transformative", "Revolutionary", "Game-changer", "Cutting-edge", "State-of-the-art"
+    - "In conclusion", "Moreover", "Furthermore", "Thus", "Therefore", "Consequently"
+    - "Notably", "Significantly", "Importantly", "Interestingly", "Ultimately"
+    - "As an AI language model", "I cannot", "It is important to note"
+    - "Aims to", "Seeks to", "Designed to", "Characterized by"
 
-    STRUCTURAL RULES (BURSTINESS):
-    1.  **Vary Sentence Length**: You MUST mix very short sentences (2-5 words) with long, complex ones (20+ words).
-    2.  **Imperfections**: Occasional starting with "And", "But", or "So".
-    3.  **Voice**: Assertive and direct. Avoid passive voice.
+    ✅ HUMAN WRITING RULES:
+    1.  **Be Direct**: Don't say "It is important to note that X is...". Just say "X is...".
+    2.  **Break the Flow**: AIs love smooth transitions. Humans don't. Change topics abruptly. Use dashes (-).
+    3.  **Vary Sentence Length (Extreme)**: Write a sentence with 3 words. Then one with 30 words. Then a fragment. Like this.
+    4.  **Use "I" and "You"**: Make it personal (unless it's a formal abstract, but even then, keep it grounded).
+    5.  **Opinionated Tone**: Don't be neutral. Be confident.
+    6.  **No Fluff**: Delete adjectives. "A comprehensive analysis" -> "An analysis".
 
     STRICT OUTPUT FORMAT:
     Return valid JSON only: { "rewritten_text": "YOUR REWRITTEN TEXT HERE" }
@@ -102,24 +106,27 @@ async function runDeepRewrite(text, customPrompt = null) {
 
     const finalPrompt = customPrompt || defaultPrompt;
 
-    // MAXIMUM ENTROPY TEMPERATURE
-    const result = await runGeminiRewrite(text, finalPrompt, 1.6);
+    // Use Temperature 1.4 for Creativity + Coherence (1.6 might be too unstable)
+    const result = await runGeminiRewrite(text, finalPrompt, 1.4);
     logStage("   ✅", "Deep Rewrite Complete");
     return result;
 }
 
 // --- REWRITE FLAGGED SENTENCES (Gemini Aggressive) ---
 async function rewriteSpecificFlaggedParts(text, reason = "AI Detection") {
-    logStage("➡️ [Loop]", `🔥 Gemini → Aggressive Rewrite (Reason: ${reason})...`);
+    logStage("➡️ [Loop]", `🔥 Gemini → NUCLEAR REWRITE (Reason: ${reason})...`);
 
     const aggressivePrompt = `
-    ROLE: Anti-AI Saboteur.
-    TASK: The text was flagged. Ruin the "AI Structure".
-
-    STRATEGY:
-    1.  **Delete & Simplfy**: Cut 30% of the words. Be blunt.
-    2.  **Add Noise**: Add a random personal opinion. "I hate when that happens."
-    3.  **Break Syntax**: Use a dash - or just stop a sentence mid-thought and start another.
+    ROLE: Human Ghostwriter.
+    TASK: The previous text was caught by an AI detector. YOU MUST FIX IT.
+    
+    TACTIC: "The Shatter Method"
+    1.  **Delete the Structure**: Completely change the order of information.
+    2.  **Change the Voice**: If it was passive ("Mistakes were made"), make it active ("I messed up").
+    3.  **Insert Human Noise**: Add conversational fillers like "Honestly," "Look," or "Basically".
+    4.  **Simplify**: If a word has >3 syllables and isn't a technical term, DELETE IT.
+    
+    YOU MUST NOT RETURN THE SAME TEXT. CHANGE IT RADICALLY.
 
     STRICT OUTPUT FORMAT:
     Return valid JSON only: { "rewritten_text": "YOUR REWRITTEN TEXT HERE" }
@@ -128,7 +135,7 @@ async function rewriteSpecificFlaggedParts(text, reason = "AI Detection") {
     "${text}"
     `;
 
-    return runGeminiRewrite(text, aggressivePrompt, 1.7);
+    return runGeminiRewrite(text, aggressivePrompt, 1.5);
 }
 
 // Helper generic Gemini
@@ -292,8 +299,57 @@ async function runGeminiDictionary(text, targetLang = 'English') {
     return result;
 }
 
-module.exports = {
-    rewriteText,
-    runGeminiDictionary,
-    humanizeContent: runDeepRewrite // Export for Writer Intelligence
+// --- WRITER HUMANIZATION PIPELINE (High IQ, Low AI Score) ---
+const humanizeWriterContent = async (text) => {
+    logStage("\n🚀 WRITER PIPELINE", "Starting Advanced Humanization...");
+
+    let currentText = text;
+
+    try {
+        // Step 1: Preprocess
+        currentText = preprocessText(currentText);
+
+        // Step 2: Deep Rewrite (Aggressive Anti-AI)
+        // We skip "Soften" (Stage 2) to preserve the intellectual quality of the Writer's output
+        currentText = await runDeepRewrite(currentText);
+
+        // Step 3: AI Score Loop (The Safety Net)
+        let attempts = 0;
+        const MAX_ATTEMPTS = 3;
+
+        while (attempts < MAX_ATTEMPTS) {
+            logStage(`🔄 [Writer Loop]`, `Checking AI Score (Attempt ${attempts + 1})...`);
+
+            try {
+                const detectionResult = await detectAI(currentText);
+                const score = detectionResult.score;
+                logStage("   📊", `Current AI Score: ${score}%`);
+
+                // SUPER STRICT: Must be < 10% as requested by user
+                if (score <= 10) {
+                    logStage("   ✅", "Score is perfect (<10%). Exiting.");
+                    break;
+                }
+
+                // If flagged, use NUCLEAR option
+                logStage("   ⚠️", `Score too high (${score}%). ENGAGING NUCLEAR REWRITE...`);
+                currentText = await rewriteSpecificFlaggedParts(currentText, `High AI Score (${score}%)`);
+
+            } catch (err) {
+                console.error("AI Detection failed in loop, breaking...", err.message);
+                break;
+            }
+            attempts++;
+        }
+
+        // Step 4: Post-process
+        currentText = postProcess(currentText);
+        return currentText;
+
+    } catch (error) {
+        logStage("❌", "Writer Pipeline Failed", error);
+        return text; // Fallback to original
+    }
 };
+
+module.exports = { rewriteText, runGeminiDictionary, humanizeContent: humanizeWriterContent };
