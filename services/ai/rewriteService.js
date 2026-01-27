@@ -75,18 +75,23 @@ async function runDeepRewrite(text, customPrompt = null) {
     logStage("➡️ [Stage 3]", "Gemini 2.0 Flash → Deep Rewrite (Chaos Mode)...");
 
     const defaultPrompt = `
-    ROLE: Tired Human Writer.
-    TASK: Rewrite this text so it passes as a human draft.
+    ROLE: Professional Human Editor.
+    TASK: Rewrite this text to be completely undetectable by AI detectors. It must sound natural, varied, and slightly imperfect.
 
-    RULES FOR BYPASSING DETECTION:
-    1.  **High Perplexity**: Be unpredictable. Jump between ideas abruptly.
-    2.  **Imperfect Grammar**:
-        -   Start sentences with lowercase letters occasionally if it fits the "vibe".
-        -   Use fragments. "Seriously." "Just like that."
-    3.  **Vocabulary Ban**:
-        -   NEVER use: "Furthermore", "Thus", "Therefore", "In conclusion", "Crucially".
-        -   NEVER use complex metaphors "Tapestry", "Landscape".
-    4.  **Voice**: Sound bored or opinionated. "Honestly, I think..." or "Whatever, point is..."
+    CRITICAL RULES (ANTI-AI DICTIONARY):
+    1.  **BANNED WORDS** (Do NOT use these):
+        -   "Delve", "Tapestry", "Landscape" (in abstract sense), "Testament", "Underscore"
+        -   "Paramount", "Pivotal", "Fostering", "Realm", "Nuance"
+        -   "In conclusion", "Moreover", "Furthermore", "Thus", "Therefore"
+    2.  **BANNED PHRASES**:
+        -   "It is important to note..."
+        -   "Can be characterized by..."
+        -   "A significant role in..."
+
+    STRUCTURAL RULES (BURSTINESS):
+    1.  **Vary Sentence Length**: You MUST mix very short sentences (2-5 words) with long, complex ones (20+ words).
+    2.  **Imperfections**: Occasional starting with "And", "But", or "So".
+    3.  **Voice**: Assertive and direct. Avoid passive voice.
 
     STRICT OUTPUT FORMAT:
     Return valid JSON only: { "rewritten_text": "YOUR REWRITTEN TEXT HERE" }

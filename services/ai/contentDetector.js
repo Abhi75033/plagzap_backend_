@@ -20,32 +20,20 @@ const getGenAI = () => {
  * Returns a score from 0-100 indicating likelihood of AI authorship.
  */
 
-const AI_DETECTION_PROMPT = `You are an AI content detector. Analyze the following text to determine if it was written by AI (like ChatGPT, Claude, Gemini) or by a human.
+const AI_DETECTION_PROMPT = `You are an expert AI Forensic Analyst. Your task is to determine if the following text was written by an AI (like ChatGPT, Claude, Gemini) or a Human.
 
-SCORING GUIDELINES:
-- 0-20%: Clearly human-written (personal voice, imperfections, unique style)
-- 20-40%: Probably human (some AI-like patterns but mostly human)
-- 40-60%: Mixed/Uncertain (could be either)
-- 60-80%: Probably AI (formal, structured, AI patterns)
-- 80-100%: Clearly AI-written (perfect grammar, generic explanations, no personality)
+Use this Chain-of-Thought process:
+1.  **Vocabulary Analysis**: Scan for "AI-isms" (e.g., "delve", "tapestry", "underscore", "crucial", "landscape", "fostering"). High frequency of these increases AI likelihood.
+2.  **Structure Analysis**: Check for "Burstiness". Humans vary sentence length drastically (e.g., a 40-word sentence followed by a 4-word one). AI is often monotonous and uniform.
+3.  **Tone Analysis**: Look for "Robotic Neutrality". AI avoids strong opinions or raw emotion. Humans use slang, idioms, and subjective qualifiers ("I hate when...", "It's super weird that...").
+4.  **Formatting**: Perfectly structured lists and "In conclusion" headers are strong AI indicators.
 
-AI INDICATORS (increase score):
-- Perfect grammar and punctuation
-- Repetitive sentence structures
-- Generic, encyclopedic explanations
-- Overuse of transition words (Furthermore, Moreover, Additionally)
-- Lack of personal opinions or emotions
-- Lists with consistent formatting
-- Overly balanced viewpoints
-
-HUMAN INDICATORS (decrease score):
-- Contractions (don't, can't, won't)
-- Personal opinions and experiences
-- Conversational tone
-- Minor grammatical imperfections
-- Informal language or slang
-- Emotional expressions
-- Inconsistent formatting
+SCORING GUIDELINES (0-100% AI Probability):
+- **0-10%**: DEFINITELY HUMAN. (Typos, slang, deep personal context, messy structure).
+- **11-30%**: LIKELY HUMAN. (Professional tone but with human nuance/irregularity).
+- **31-59%**: UNCERTAIN / MIXED. (Could be AI-edited human text).
+- **60-89%**: LIKELY AI. (Standard ChatGPT style, repetitive, generic).
+- **90-100%**: DEFINITELY AI. (Robotic, "As an AI language model", perfect lists).
 
 Text to analyze:
 "`;
@@ -60,48 +48,41 @@ const heuristicDetection = (text) => {
 
     // AI indicators (increase score)
     const aiPatterns = [
-        { pattern: /\bFurthermore\b/gi, weight: 8, name: 'transition words' },
-        { pattern: /\bMoreover\b/gi, weight: 8, name: 'transition words' },
-        { pattern: /\bAdditionally\b/gi, weight: 6, name: 'transition words' },
-        { pattern: /\bIn conclusion\b/gi, weight: 10, name: 'formal conclusions' },
-        { pattern: /\bIt is important to note\b/gi, weight: 12, name: 'formal phrases' },
-        { pattern: /\bIt is worth mentioning\b/gi, weight: 10, name: 'formal phrases' },
-        { pattern: /\bOne might argue\b/gi, weight: 8, name: 'academic tone' },
-        { pattern: /\bThis suggests that\b/gi, weight: 6, name: 'analytical language' },
-        { pattern: /\bIn order to\b/gi, weight: 4, name: 'verbose phrasing' },
-        { pattern: /\bDue to the fact that\b/gi, weight: 6, name: 'verbose phrasing' },
-        { pattern: /\bIt should be noted\b/gi, weight: 8, name: 'formal phrases' },
-        { pattern: /\bAs mentioned earlier\b/gi, weight: 6, name: 'structured references' },
+        { pattern: /\bFurthermore\b/gi, weight: 6, name: 'transition words' },
+        { pattern: /\bMoreover\b/gi, weight: 6, name: 'transition words' },
+        { pattern: /\bIn conclusion\b/gi, weight: 8, name: 'formal conclusions' },
+        { pattern: /\bIt is important to note\b/gi, weight: 10, name: 'robotic phrasing' },
+        { pattern: /\bIt is worth mentioning\b/gi, weight: 8, name: 'robotic phrasing' },
+        { pattern: /\bdelve\b/gi, weight: 15, name: 'AI-specific vocabulary' },
+        { pattern: /\btapestry\b/gi, weight: 15, name: 'AI-specific vocabulary' },
+        { pattern: /\bunderscore\b/gi, weight: 10, name: 'AI-specific vocabulary' },
+        { pattern: /\bfostering\b/gi, weight: 8, name: 'AI-specific vocabulary' },
+        { pattern: /\bnuance\b/gi, weight: 5, name: 'common AI word' },
     ];
 
     // Human indicators (decrease score)
     const humanPatterns = [
-        { pattern: /\bI think\b/gi, weight: -8, name: 'personal opinion' },
-        { pattern: /\bI feel\b/gi, weight: -8, name: 'personal opinion' },
-        { pattern: /\bhonestly\b/gi, weight: -10, name: 'conversational tone' },
-        { pattern: /\bto be fair\b/gi, weight: -8, name: 'conversational tone' },
-        { pattern: /\bactually\b/gi, weight: -4, name: 'casual language' },
-        { pattern: /\bdon't\b/gi, weight: -3, name: 'contractions' },
-        { pattern: /\bcan't\b/gi, weight: -3, name: 'contractions' },
-        { pattern: /\bwon't\b/gi, weight: -3, name: 'contractions' },
-        { pattern: /\bit's\b/gi, weight: -2, name: 'contractions' },
-        { pattern: /\bthat's\b/gi, weight: -2, name: 'contractions' },
-        { pattern: /\bI'm\b/gi, weight: -4, name: 'contractions' },
-        { pattern: /\bkinda\b/gi, weight: -10, name: 'slang' },
-        { pattern: /\bgonna\b/gi, weight: -10, name: 'slang' },
-        { pattern: /\bwanna\b/gi, weight: -10, name: 'slang' },
-        { pattern: /\blol\b/gi, weight: -15, name: 'internet speak' },
-        { pattern: /\bhaha\b/gi, weight: -12, name: 'laughter' },
-        { pattern: /!{2,}/g, weight: -8, name: 'exclamation marks' },
-        { pattern: /\.\.\./g, weight: -5, name: 'ellipsis' },
+        { pattern: /\bI think\b/gi, weight: -10, name: 'personal opinion' },
+        { pattern: /\bI feel\b/gi, weight: -10, name: 'personal opinion' },
+        { pattern: /\bhonestly\b/gi, weight: -12, name: 'conversational tone' },
+        { pattern: /\bactually\b/gi, weight: -8, name: 'casual language' },
+        { pattern: /\bdon't\b/gi, weight: -4, name: 'contractions' },
+        { pattern: /\bcan't\b/gi, weight: -4, name: 'contractions' },
+        { pattern: /\bit's\b/gi, weight: -4, name: 'contractions' },
+        { pattern: /\bkinda\b/gi, weight: -15, name: 'slang' },
+        { pattern: /\bgonna\b/gi, weight: -15, name: 'slang' },
+        { pattern: /\bwhatever\b/gi, weight: -10, name: 'dismissive tone' },
+        { pattern: /\bstuff\b/gi, weight: -8, name: 'vague language' },
+        { pattern: /!{2,}/g, weight: -10, name: 'emotional punctuation' },
+        { pattern: /\.\.\./g, weight: -5, name: 'trailing thought' },
     ];
 
     // Check AI patterns
     for (const { pattern, weight, name } of aiPatterns) {
         const matches = (text.match(pattern) || []).length;
         if (matches > 0) {
-            score += weight * Math.min(matches, 3); // Cap at 3 matches
-            if (matches > 0 && !reasons.includes(name)) reasons.push(name);
+            score += weight * matches; // allow stacking
+            if (!reasons.includes(name)) reasons.push(name);
         }
     }
 
@@ -109,29 +90,25 @@ const heuristicDetection = (text) => {
     for (const { pattern, weight, name } of humanPatterns) {
         const matches = (text.match(pattern) || []).length;
         if (matches > 0) {
-            score += weight * Math.min(matches, 3);
+            score += weight * matches;
+            // Human markers reduce score drastically
         }
     }
 
-    // Check sentence structure
+    // Check sentence structure (Burstiness Proxy)
     const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 0);
     if (sentences.length > 3) {
-        // Check for similar sentence lengths (AI tends to be uniform)
         const lengths = sentences.map(s => s.trim().split(/\s+/).length);
         const avgLength = lengths.reduce((a, b) => a + b, 0) / lengths.length;
         const variance = lengths.reduce((sum, len) => sum + Math.pow(len - avgLength, 2), 0) / lengths.length;
 
-        if (variance < 15) {
-            score += 10; // Very uniform = likely AI
-        } else if (variance > 50) {
-            score -= 8; // High variance = likely human
+        // High variance in sentence length is VERY human
+        if (variance > 100) {
+            score -= 15;
+        } else if (variance < 10) {
+            score += 15; // Robotic uniformity
+            reasons.push('uniform sentence structure');
         }
-    }
-
-    // Check for bullet points or numbered lists
-    const hasList = /^\s*[-•*]\s+/m.test(text) || /^\s*\d+\.\s+/m.test(text);
-    if (hasList) {
-        score += 5; // Lists are common in AI content
     }
 
     // Normalize score to 0-100
@@ -140,11 +117,11 @@ const heuristicDetection = (text) => {
     // Generate reason
     let reason;
     if (score >= 70) {
-        reason = `High AI probability: ${reasons.slice(0, 2).join(', ') || 'formal writing style'}`;
-    } else if (score >= 40) {
-        reason = 'Mixed indicators: could be AI-assisted or human';
+        reason = `High AI probability: ${reasons.slice(0, 2).join(', ') || 'robotic structure & vocabulary'}`;
+    } else if (score >= 35) {
+        reason = 'Mixed indicators: formal style but lacks strong human voice';
     } else {
-        reason = 'Low AI probability: conversational and personal tone detected';
+        reason = 'Low AI probability: high structural variance & natural tone';
     }
 
     return { score, reason, language: 'English' };
