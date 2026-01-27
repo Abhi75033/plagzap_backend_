@@ -1,5 +1,5 @@
 const History = require('../models/History');
-const { rewriteText } = require('../services/ai/rewriteService');
+const { rewriteText, humanizeContent } = require('../services/ai/rewriteService');
 
 exports.rewriteContent = async (req, res) => {
     try {

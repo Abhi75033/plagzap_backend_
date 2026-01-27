@@ -1,4 +1,5 @@
 const axios = require('axios');
+const { humanizeContent } = require('../services/ai/rewriteService');
 
 /**
  * TOPIC ANALYZER
@@ -172,34 +173,20 @@ exports.buildResearchFramework = async (req, res) => {
             return res.status(400).json({ error: 'Research builder only available for Research/Academic modes' });
         }
 
-        const prompt = `Build a research framework for this topic:
+        const prompt = `You are a Senior Research Analyst. Build a rigorous research framework for:
 Topic: "${topic}"
 
-Provide:
+Your Goal: Provide a structued, factually consistent foundation for a high-quality academic paper.
 
-1. Research Gap:
-   - What existing work focuses on
-   - What is under-explored
-   - Where this work fits
-   (No fake citations, logical reasoning only)
+REQUIREMENTS:
+1.  **Research Gap**: Identify what is MISSING in current literature. Do not just state basics. Find the nuance.
+2.  **Problem Statement**: Write a concise, impactful paragraph defining the specific issue this research addresses.
+3.  **Objectives**: 3-5 specific, measurable goals using Bloom's Taxonomy verbs (Analyze, Evaluate, Synthesize).
+4.  **Methodology**: Suggest the MOST appropriate method (e.g., Mixed-Methods, Longitudinal Study) with specific tools/datasets that actually exist.
 
-2. Problem Statement:
-   - One clear paragraph explaining the limitation, why it matters, what research aims to address
-
-3. Objectives:
-   - 3-5 measurable objectives aligned with topic
-
-4. Research Questions:
-   - 1 primary question
-   - 2-4 sub-questions with clear scope
-
-5. Methodology Predictor:
-   - Research type (survey/experimental/comparative)
-   - Possible datasets or tools
-   - Evaluation metrics
-   (Must NOT claim certainty - use "could", "might", "typically")
-
-Be honest. Uncertainty is okay.
+CRITICAL CHECK:
+- Review your own output. Is the "Research Gap" distinct? Are the objectives achievable?
+- If the topic is vague, define a specific scope.
 
 Return JSON:
 {
@@ -256,13 +243,20 @@ exports.refineContent = async (req, res) => {
             return res.status(400).json({ error: 'Content is required' });
         }
 
-        if (!action) {
-            return res.status(400).json({ error: 'Action is required' });
+        // SPECIAL HANDLING: Use shared "Anti-AI" logic for AI reduction
+        if (action === 'reduceAI' || action === 'improveTone') {
+            console.log('✨ Using Advanced Humanization Engine for:', action);
+            try {
+                // Call the shared service that has the Anti-AI Dictionary & Burstiness rules
+                const humanized = await humanizeContent(content);
+                return res.json({ refinedContent: humanized });
+            } catch (serviceError) {
+                console.error('Humanization service failed, falling back to basic:', serviceError.message);
+                // Fallthrough to basic method if service fails
+            }
         }
 
         const actionPrompts = {
-            'reduceAI': 'Rewrite to reduce AI detection: vary sentence length, add natural imperfections, avoid AI phrases',
-            'improveTone': `Improve tone to match ${mode} style better`,
             'improveReadability': 'Simplify language, shorter sentences, clearer structure',
             'makeAcademic': 'Make more formal and scholarly',
             'makeConversational': 'Make more casual and engaging'
@@ -282,7 +276,7 @@ Return ONLY valid JSON in this exact format:
   "refinedContent": "your refined text here"
 }`;
 
-        console.log('📤 Calling Gemini API for refinement...');
+        console.log('📤 Calling Gemini API for refinement (Basic Mode)...');
 
         const response = await axios.post(
             `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${process.env.GEMINI_API_KEY}`,
@@ -297,45 +291,23 @@ Return ONLY valid JSON in this exact format:
             { headers: { 'Content-Type': 'application/json' } }
         );
 
-        console.log('📥 Received response from Gemini');
-
-        // Extract text from response
         const rawText = response.data.candidates[0].content.parts[0].text;
-
-        // Try to parse JSON
         let result;
         try {
             result = JSON.parse(rawText);
         } catch (parseError) {
-            console.error('JSON parse error, raw response:', rawText);
-            // Fallback: if JSON parsing fails, just use the text as refined content
             result = { refinedContent: rawText.replace(/```json|```/g, '').trim() };
         }
 
-        // Validate result has refinedContent
         if (!result.refinedContent) {
-            console.error('No refinedContent in result:', result);
-            return res.status(500).json({
-                error: 'Invalid response format from AI',
-                refinedContent: content // Return original as fallback
-            });
+            return res.status(500).json({ error: 'Invalid AI response', refinedContent: content });
         }
 
-        console.log('✅ Refinement successful, length:', result.refinedContent.length);
         res.json(result);
 
     } catch (error) {
-        console.error('❌ Content refinement error:', error.response?.data || error.message);
-        console.error('Error details:', {
-            message: error.message,
-            status: error.response?.status,
-            data: error.response?.data
-        });
-
-        res.status(500).json({
-            error: 'Failed to refine content',
-            details: error.response?.data?.error?.message || error.message
-        });
+        console.error('❌ Content refinement error:', error.message);
+        res.status(500).json({ error: 'Failed to refine content' });
     }
 };
 

@@ -292,4 +292,8 @@ async function runGeminiDictionary(text, targetLang = 'English') {
     return result;
 }
 
-module.exports = { rewriteText, runGeminiDictionary };
+module.exports = {
+    rewriteText,
+    runGeminiDictionary,
+    humanizeContent: runDeepRewrite // Export for Writer Intelligence
+};
