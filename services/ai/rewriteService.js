@@ -42,21 +42,20 @@ function preprocessText(text) {
 }
 
 // --- STAGE 2: GEMINI CHAOS START (Break Consistency) ---
+// --- STAGE 2: GEMINI CHAOS START (Conversation Mode) ---
 async function runGeminiSoften(text) {
-    logStage("➡️ [Stage 2]", "Gemini 2.0 Flash → Chaos Mode (Entropy Injection)...");
+    logStage("➡️ [Stage 2]", "Gemini 2.0 Flash → Softening (Conversational Flow)...");
 
     const prompt = `
-    ROLE: "The Lazy Texter".
-    TASK: Rewrite this text. Do NOT try to be smart. Do NOT try to be professional.
-
-    STRATEGY (MAX CHAOS):
-    1.  **Dumb Down**: Use the simplest words possible. Ban 4-syllable words.
-        -   Instead of "utilize", use "use".
-        -   Instead of "however", use "but".
-    2.  **Lazy Grammar**: It is okay to have run-on sentences. It is okay to skip a comma. Make it look like a human typed it fast.
-    3.  **Variable Flow**: Write one huge sentence. Then a tiny one. Disconnect thoughts slightly.
-    4.  **No AI polish**: If it looks perfect, it is wrong. Make it look "rough".
-
+    ROLE: A Casual, Friendly Human.
+    TASK: Read this text and retell it to a friend. 
+    
+    GOAL:
+    -   Remove stiffness. 
+    -   Make it flow naturally.
+    -   Use contractions (it's, can't, won't).
+    -   Don't worry about being "academic". Just get the ideas across clearly and simply.
+    
     STRICT OUTPUT FORMAT:
     Return valid JSON only: { "rewritten_text": "YOUR REWRITTEN TEXT HERE" }
 
@@ -65,21 +64,21 @@ async function runGeminiSoften(text) {
     `;
 
     // High temperature for unpredictability
-    const result = await runGeminiRewrite(text, prompt, 1.3);
-    logStage("   ✅", "Chaos Mode Complete");
+    const result = await runGeminiRewrite(text, prompt, 1.1);
+    logStage("   ✅", "Softening Complete");
     return result;
 }
 
 // --- STAGE 3: GEMINI PRO REWRITE (The Destroyer) ---
+// --- STAGE 3: GEMINI PRO REWRITE (The Ghostwriter) ---
 async function runDeepRewrite(text, customPrompt = null) {
-    logStage("➡️ [Stage 3]", "Gemini 2.0 Flash → Deep Rewrite (Anti-Detection Mode)...");
+    logStage("➡️ [Stage 3]", "Gemini 2.0 Flash → Deep Rewrite (Ghostwriter Mode)...");
 
     const defaultPrompt = `
-    ROLE: A Blunt, Opinionated Human Writer.
-    TASK: Rewrite the following text to remove ALL "AI stink". It must sound like a real person wrote it—someone with a distinct voice, not a robot.
+    ROLE: Elite Ghostwriter & Editor.
+    TASK: Rewrite the following text to maximize "Perplexity" and "Burstiness" while maintaining perfect coherence. It must read like it was written by a smart, witty human expert.
 
     🚫 STRICTLY BANNED WORDS (The "AI Dictionary"):
-    If you use ANY of these, you FAILED:
     - "Delve", "Tapestry", "Landscape", "Realm", "Nuance", "Myriad", "Plethora"
     - "Underscore", "Testament", "Pivotal", "Paramount", "Crucial", "Vital"
     - "Fostering", "Leverage", "Utilize", "Harness", "Empower", "Facilitate"
@@ -89,13 +88,16 @@ async function runDeepRewrite(text, customPrompt = null) {
     - "As an AI language model", "I cannot", "It is important to note"
     - "Aims to", "Seeks to", "Designed to", "Characterized by"
 
-    ✅ HUMAN WRITING RULES:
-    1.  **Be Direct**: Don't say "It is important to note that X is...". Just say "X is...".
-    2.  **Break the Flow**: AIs love smooth transitions. Humans don't. Change topics abruptly. Use dashes (-).
-    3.  **Vary Sentence Length (Extreme)**: Write a sentence with 3 words. Then one with 30 words. Then a fragment. Like this.
-    4.  **Use "I" and "You"**: Make it personal (unless it's a formal abstract, but even then, keep it grounded).
-    5.  **Opinionated Tone**: Don't be neutral. Be confident.
-    6.  **No Fluff**: Delete adjectives. "A comprehensive analysis" -> "An analysis".
+    ✅ HUMAN WRITING RULES (The "Ghostwriter Protocol"):
+    1.  **Idiomatic Phrasing**: Use natural idioms where they fit (e.g., "cut to the chase", "flesh out"). AIs rarely do this well.
+    2.  **Specific Concrete Details**: Don't be abstract. Instead of "challenges were faced", say "we hit a wall".
+    3.  **Active Voice Only**: "Mistakes were made" -> "I messed up".
+    4.  **Varied Sentence Structure**:
+        -   Use rhetorical questions ("So, what’s the point?").
+        -   Use imperative sentences ("Think about it.").
+        -   Use compound-complex sentences mixed with fragments.
+    5.  **Opinionated & Biased**: AIs are neutral. Humans have opinions. Be slightly biased or colorful in your word choice.
+    6.  **Remove Signposting**: Delete "Firstly", "Secondly", "In conclusion". Just flow from one point to the next.
 
     STRICT OUTPUT FORMAT:
     Return valid JSON only: { "rewritten_text": "YOUR REWRITTEN TEXT HERE" }
@@ -106,27 +108,28 @@ async function runDeepRewrite(text, customPrompt = null) {
 
     const finalPrompt = customPrompt || defaultPrompt;
 
-    // Use Temperature 1.4 for Creativity + Coherence (1.6 might be too unstable)
-    const result = await runGeminiRewrite(text, finalPrompt, 1.4);
+    // Use Temperature 1.1 for Balance (Creativity + Coherence)
+    const result = await runGeminiRewrite(text, finalPrompt, 1.1);
     logStage("   ✅", "Deep Rewrite Complete");
     return result;
 }
 
 // --- REWRITE FLAGGED SENTENCES (Gemini Aggressive) ---
+// --- REWRITE FLAGGED SENTENCES (Gemini Clinical) ---
 async function rewriteSpecificFlaggedParts(text, reason = "AI Detection") {
-    logStage("➡️ [Loop]", `🔥 Gemini → NUCLEAR REWRITE (Reason: ${reason})...`);
+    logStage("➡️ [Loop]", `🔥 Gemini → Surgical Rewrite (Reason: ${reason})...`);
 
     const aggressivePrompt = `
-    ROLE: Human Ghostwriter.
-    TASK: The previous text was caught by an AI detector. YOU MUST FIX IT.
-    
-    TACTIC: "The Shatter Method"
-    1.  **Delete the Structure**: Completely change the order of information.
-    2.  **Change the Voice**: If it was passive ("Mistakes were made"), make it active ("I messed up").
-    3.  **Insert Human Noise**: Add conversational fillers like "Honestly," "Look," or "Basically".
-    4.  **Simplify**: If a word has >3 syllables and isn't a technical term, DELETE IT.
-    
-    YOU MUST NOT RETURN THE SAME TEXT. CHANGE IT RADICALLY.
+    ROLE: Expert Copy Editor (Humanizer).
+    TASK: The previous text was flagged as AI-generated. You need to rewrite it to break the "predictable patterns" while improving the quality.
+
+    TACTIC: "Syntactic Reshuffling"
+    1.  **Change Clause Order**: If a sentence is "X because Y", change it to "Since Y, X".
+    2.  **Combine/Split**: Take two medium sentences and make one complex one. Or take one long one and make three short punchy ones.
+    3.  **Inject Personality**: Add a "human touch" - a rhetorical question, a dashed interjection, or a colloquialism.
+    4.  **Check Vocabulary**: Ensure NO "Banned Words" (delve, tapestry, etc.) exist. Replace them with simple Anglo-Saxon words.
+
+    The goal is NOT to destroy the text, but to make it *unpredictable* to an algorithm.
 
     STRICT OUTPUT FORMAT:
     Return valid JSON only: { "rewritten_text": "YOUR REWRITTEN TEXT HERE" }
@@ -135,7 +138,7 @@ async function rewriteSpecificFlaggedParts(text, reason = "AI Detection") {
     "${text}"
     `;
 
-    return runGeminiRewrite(text, aggressivePrompt, 1.5);
+    return runGeminiRewrite(text, aggressivePrompt, 1.2);
 }
 
 // Helper generic Gemini
