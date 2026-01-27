@@ -72,34 +72,33 @@ async function runGeminiSoften(text) {
 // --- STAGE 3: GEMINI PRO REWRITE (The Destroyer) ---
 // --- STAGE 3: GEMINI PRO REWRITE (The Ghostwriter) ---
 // --- STAGE 3: GEMINI PRO REWRITE (The Imperfect Human) ---
+// --- STAGE 3: GEMINI PRO REWRITE (The Idiosyncratic Expert) ---
 async function runDeepRewrite(text, customPrompt = null) {
-    logStage("➡️ [Stage 3]", "Gemini 2.0 Flash → Deep Rewrite (Human Imperfection Mode)...");
+    logStage("➡️ [Stage 3]", "Gemini 2.0 Flash → Deep Rewrite (Idiosyncratic Mode)...");
 
     const defaultPrompt = `
-    ROLE: A Real Person (Not a Writer).
-    TASK: Rewrite this text. Imagine you are typing this out quickly to a friend or on a forum.
-    
-    GOAL:
-    -   **Normalize Imperfection**: Real humans aren't perfect. It's okay to have a run-on sentence. It's okay to start a sentence with "But" or "And".
-    -   **Remove "AI Polish"**: If it flows too perfectly, break it.
-    -   **Use Simple Words**: Don't say "utilize", say "use". Don't say "obtain", say "get".
-    -   **Opinion/Bias**: Add little personal asides like "(I think...)" or "Honestly...".
-    
-    🚫 STRICTLY BANNED WORDS (The "AI Dictionary"):
-    - "Delve", "Tapestry", "Landscape", "Realm", "Nuance", "Myriad", "Plethora"
-    - "Underscore", "Testament", "Pivotal", "Paramount", "Crucial", "Vital"
-    - "Fostering", "Leverage", "Utilize", "Harness", "Empower", "Facilitate"
-    - "Transformative", "Revolutionary", "Game-changer", "Cutting-edge", "State-of-the-art"
-    - "In conclusion", "Moreover", "Furthermore", "Thus", "Therefore", "Consequently"
-    - "Notably", "Significantly", "Importantly", "Interestingly", "Ultimately"
-    - "As an AI language model", "I cannot", "It is important to note"
-    - "Aims to", "Seeks to", "Designed to", "Characterized by"
+    ROLE: An Eccentric Subject Matter Expert.
+    TASK: Rewrite the following text. You know this topic inside out, and you are tired of generic explanations. Write with authority, density, and slight unpredictability.
 
-    ✅ HUMAN FACTOR INSTRUCTIONS:
-    1.  **Grammar Slips**: Occasionally use a fragment. "Just like that."
-    2.  **Conversational Fillers**: Use words like "Well," "So," "Basically," "You know".
-    3.  **Variable Sentence Length**: Write a long, rambling sentence that captures a whole train of thought followed by a short one.
-    4.  **Colloquialisms**: Use "I feel like" instead of "It is my opinion that".
+    🚫 BANNED WORDS (Strict Enforcement):
+    -   AI Clichés: "delve", "tapestry", "landscape", "nuance", "testament", "pivotal", "transformative", "underscore", "fostering".
+    -   Lazy Transitions: "Moreover", "Furthermore", "In conclusion", "It is important to note".
+    -   Fake Casual: "lol", "lmao", "honestly", "basically", "literally", "like, you know".
+
+    ✅ THE "ANTI-PATTERN" PROTOCOL:
+    1.  **Structural Burstiness**:
+        -   Write one very long, complex sentence with multiple clauses.
+        -   Follow it with a fragment. "Simple as that." or "Hard pass."
+        -   Follow that with a direct question.
+    2.  **Show, Don't Tell**:
+        -   Don't say "It is efficient." Say "It cuts runtime by half."
+        -   Don't say "Challenges were met." Say "We hit a bottleneck at the API layer."
+    3.  **Asymmetric Logic**:
+        -   AIs balance every argument (On one hand... on the other). Humans are biased. Pick a side. Be opinionated.
+    4.  **Use "Rare" Simple Words**:
+        -   Instead of "utilize", use "wield".
+        -   Instead of "difficult", use "gnarly" or "tough".
+        -   Keep it professional but distinct.
 
     STRICT OUTPUT FORMAT:
     Return valid JSON only: { "rewritten_text": "YOUR REWRITTEN TEXT HERE" }
@@ -110,8 +109,8 @@ async function runDeepRewrite(text, customPrompt = null) {
 
     const finalPrompt = customPrompt || defaultPrompt;
 
-    // Use Temperature 1.3 for higher variance but grounded in the prompt instructions
-    const result = await runGeminiRewrite(text, finalPrompt, 1.3);
+    // Use Temperature 1.2 for Balance (High Variance but strictly adhering to negative constraints)
+    const result = await runGeminiRewrite(text, finalPrompt, 1.2);
     logStage("   ✅", "Deep Rewrite Complete");
     return result;
 }
@@ -119,20 +118,21 @@ async function runDeepRewrite(text, customPrompt = null) {
 // --- REWRITE FLAGGED SENTENCES (Gemini Aggressive) ---
 // --- REWRITE FLAGGED SENTENCES (Gemini Clinical) ---
 // --- REWRITE FLAGGED SENTENCES (Gemini Naturalizer) ---
+// --- REWRITE FLAGGED SENTENCES (Gemini Logic Inverter) ---
 async function rewriteSpecificFlaggedParts(text, reason = "AI Detection") {
-    logStage("➡️ [Loop]", `🔥 Gemini → Naturalize Rewrite (Reason: ${reason})...`);
+    logStage("➡️ [Loop]", `🔥 Gemini → Perspective Shift (Reason: ${reason})...`);
 
     const aggressivePrompt = `
-    ROLE: Regular Human.
-    TASK: This text sounds like a robot wrote it. Fix it.
-    
-    INSTRUCTIONS:
-    1.  **Break the Patterns**: If it says "Firstly, Secondly, Finally", delete those words. Just say the points.
-    2.  **Add "Human" Noise**: Use words like "Actually," "To be honest," or "Kind of."
-    3.  **Simplify**: If you see a big fancy word, replace it with a normal one.
-    4.  **Sentence Variety**: Short sentence. Long rambling sentence explaining the details. Fragment.
+    ROLE: Content Strategist.
+    TASK: The previous text fits a known "AI Pattern". You need to rotate the perspective to break the fingerprint.
 
-    GOAL: Make it indiscernible from a Reddit comment or a casual email.
+    TACTIC: "The Angle Shift"
+    1.  **Change the Subject**: If the sentence is about "Algorithms", make it about "The Developers".
+        -   Old: "Algorithms can learn quickly."
+        -   New: "Developers are seeing these models pick up skills at record speed."
+    2.  **Invert the Logic**: Start with the result, then explain the cause.
+    3.  **Specific Analogy**: Use a real-world metaphor (not a generic one).
+    4.  **NO FLUFF**: Delete words like "Therefore", "Ideally", "It seems".
 
     STRICT OUTPUT FORMAT:
     Return valid JSON only: { "rewritten_text": "YOUR REWRITTEN TEXT HERE" }
