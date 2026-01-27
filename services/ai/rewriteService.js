@@ -75,26 +75,26 @@ async function runGeminiSoften(text) {
 // --- STAGE 3: GEMINI PRO REWRITE (The Idiosyncratic Expert) ---
 // --- STAGE 3: GEMINI PRO REWRITE (The Narrative Scrambler) ---
 // --- STAGE 3: GEMINI PRO REWRITE (The Academic Contrarian) ---
+// --- STAGE 3: GEMINI PRO REWRITE (The Empirical Storyteller) ---
 async function runDeepRewrite(text, customPrompt = null) {
-    logStage("➡️ [Stage 3]", "Gemini 2.0 Flash → Deep Rewrite (Academic Anti-Pattern Mode)...");
+    logStage("➡️ [Stage 3]", "Gemini 2.0 Flash → Deep Rewrite (Professional Anti-AI Mode)...");
 
     const defaultPrompt = `
-    ROLE: A Distinguished Professor with a Unique Voice.
-    TASK: Rewrite the text to satisfy academic standards while breaking "AI Patterns".
-    
-    THE "TURNITIN PROTOCOL":
-    1.  **Structure**: AIs write "Sentence. Sentence. Sentence." You must write "Clause -- interjection -- clause; conclusion."
-        -   Use semicolons (;). Use em-dashes (--).
-        -   Start sentences with "Yet," "Further," "To be sure," (But NOT "Moreover").
+    ROLE: Field Researcher / Senior Analyst.
+    TASK: Retell the following information as a direct observation. NOT an essay.
+
+    STRATEGY: "Asymmetric Professionalism"
+    1.  **Structure**: Break the "Topic -> Support -> Conclusion" loop.
+        -   Start with a concrete detail or a paradox. "We expected X, but Y happened."
+        -   Use direct, punchy statements.
     2.  **Vocabulary**:
-        -   No "slang" (Use "Significant" instead of "Big").
-        -   No "AI Words" (Ban: "Delve", "Tapestry", "Utilize").
-        -   Use *precise, obscure* verbs. Instead of "show", use "elucidate" or "demarcate".
-    3.  **The "Human" Argument**:
-        -   Take a stance. AIs hedge. You must assert.
-        -   Use rhetorical questions *sparingly* but effectively. "Is this sustainable? Hardly."
-    4.  **Flow**:
-        -   Vary sentence length drastically. One 40-word sentence followed by a 3-word sentence.
+        -   **BAN SLANG**: No "Boom", "stuff", "crazy".
+        -   **BAN HYPER-FORMAL**: No "Moreover", "Ostensibly", "Parsimonious", "Aforementioned", "Thus".
+        -   **USE**: Clear, strong verbs. "Drive", "Break", "Reveal".
+    3.  **Tone**: "The Economist" or "Nature Journal". Dense, smart, but NOT flowery.
+    4.  **Burstiness**:
+        -   Write a 30-word sentence explaining a mechanism.
+        -   Follow it with a 4-word fact. "It failed."
 
     STRICT OUTPUT FORMAT:
     Return valid JSON only: { "rewritten_text": "YOUR REWRITTEN TEXT HERE" }
@@ -105,8 +105,8 @@ async function runDeepRewrite(text, customPrompt = null) {
 
     const finalPrompt = customPrompt || defaultPrompt;
 
-    // Use Temperature 1.25 for sophisticated variance
-    const result = await runGeminiRewrite(text, finalPrompt, 1.25);
+    // Use Temperature 1.35 for high structural variance without the slang
+    const result = await runGeminiRewrite(text, finalPrompt, 1.35);
     logStage("   ✅", "Deep Rewrite Complete");
     return result;
 }
@@ -117,20 +117,21 @@ async function runDeepRewrite(text, customPrompt = null) {
 // --- REWRITE FLAGGED SENTENCES (Gemini Logic Inverter) ---
 // --- REWRITE FLAGGED SENTENCES (Gemini Deconstructor) ---
 // --- REWRITE FLAGGED SENTENCES (Gemini Academic Refiner) ---
+// --- REWRITE FLAGGED SENTENCES (Gemini Simplifier) ---
 async function rewriteSpecificFlaggedParts(text, reason = "AI Detection") {
-    logStage("➡️ [Loop]", `🔥 Gemini → Academic Refinement (Reason: ${reason})...`);
+    logStage("➡️ [Loop]", `🔥 Gemini → Simplicity Rewrite (Reason: ${reason})...`);
 
     const aggressivePrompt = `
-    ROLE: Strict Academic Editor.
-    TASK: The text fits an "AI Pattern". Scramble the syntax but INCREASE the formality.
+    ROLE: ruthlessly Efficient Editor.
+    TASK: The text fits an "AI Pattern" because it's trying too hard to be smart. Simplify it.
 
     TACTICS:
-    1.  **Complex Syntax**: Combine two simple sentences into one complex structure using a semicolon or subordinate clause.
-    2.  **Inversion**: "The results showed..." -> "Of particular interest were the results..."
-    3.  **Precise Terminology**: Replace generic words with field-specific jargon (where appropriate) but AVOID AI clichés (delve, vital).
-    4.  **No Fluff**: Cut "It is important to note". Just state the fact.
+    1.  **Cut the Fluff**: Remove "encapsulates", "exemplifies", "renders". Just say "is" or "shows".
+    2.  **Unpack Density**: If a sentence has 4 clauses, break it into two sentences.
+    3.  **Active Voice**: "The result was demonstrated by..." -> "The data showed..."
+    4.  **Human Error Injection**: Add a conversational connector like "Actually," or "Mind you," to break the academic rhythm.
 
-    GOAL: Pass Turnitin as "High-Level Human Writing".
+    GOAL: Pass as a Smart Human, not a Thesaurus Bot.
 
     STRICT OUTPUT FORMAT:
     Return valid JSON only: { "rewritten_text": "YOUR REWRITTEN TEXT HERE" }
@@ -139,7 +140,7 @@ async function rewriteSpecificFlaggedParts(text, reason = "AI Detection") {
     "${text}"
     `;
 
-    return runGeminiRewrite(text, aggressivePrompt, 1.35);
+    return runGeminiRewrite(text, aggressivePrompt, 1.4);
 }
 
 // Helper generic Gemini
