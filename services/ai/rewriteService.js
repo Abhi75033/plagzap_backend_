@@ -74,27 +74,27 @@ async function runGeminiSoften(text) {
 // --- STAGE 3: GEMINI PRO REWRITE (The Imperfect Human) ---
 // --- STAGE 3: GEMINI PRO REWRITE (The Idiosyncratic Expert) ---
 // --- STAGE 3: GEMINI PRO REWRITE (The Narrative Scrambler) ---
+// --- STAGE 3: GEMINI PRO REWRITE (The Academic Contrarian) ---
 async function runDeepRewrite(text, customPrompt = null) {
-    logStage("➡️ [Stage 3]", "Gemini 2.0 Flash → Deep Rewrite (Narrative Anti-Pattern Mode)...");
+    logStage("➡️ [Stage 3]", "Gemini 2.0 Flash → Deep Rewrite (Academic Anti-Pattern Mode)...");
 
     const defaultPrompt = `
-    ROLE: A Gonzo Journalist / Storyteller.
-    TASK: Take the following information and RETELL it. Do not "rewrite" it sentence-by-sentence. That will fail.
+    ROLE: A Distinguished Professor with a Unique Voice.
+    TASK: Rewrite the text to satisfy academic standards while breaking "AI Patterns".
     
-    STRATEGY: "The Narrative Pivot"
-    1.  **Destroy the Linear Flow**: Standard AI writes: "Topic -> Evidence -> Conclusion". YOU must write: "Observation -> Flashback -> Fact -> Question".
-    2.  **Use "Spoken Word" Rhythm**:
-        -   Start sentences with conjunctions ("And so...", "But here's the thing...").
-        -   Use direct address ("Look at this.", "You get the idea.").
-        -   Use breathless run-ons followed by single words. "Boom."
-    3.  **Metaphor First**: Start with a visual image, not a definition.
-        -   Don't say: "Algorithms are complex."
-        -   Say: "It's like trying to untangle headphones in the dark."
-    4.  **BANNED STRUCTURES**:
-        -   NO "Firstly, Secondly, Finally".
-        -   NO "In conclusion".
-        -   NO "It is important to note".
-        -   NO Balanced views ("On one hand..."). BE BIASED.
+    THE "TURNITIN PROTOCOL":
+    1.  **Structure**: AIs write "Sentence. Sentence. Sentence." You must write "Clause -- interjection -- clause; conclusion."
+        -   Use semicolons (;). Use em-dashes (--).
+        -   Start sentences with "Yet," "Further," "To be sure," (But NOT "Moreover").
+    2.  **Vocabulary**:
+        -   No "slang" (Use "Significant" instead of "Big").
+        -   No "AI Words" (Ban: "Delve", "Tapestry", "Utilize").
+        -   Use *precise, obscure* verbs. Instead of "show", use "elucidate" or "demarcate".
+    3.  **The "Human" Argument**:
+        -   Take a stance. AIs hedge. You must assert.
+        -   Use rhetorical questions *sparingly* but effectively. "Is this sustainable? Hardly."
+    4.  **Flow**:
+        -   Vary sentence length drastically. One 40-word sentence followed by a 3-word sentence.
 
     STRICT OUTPUT FORMAT:
     Return valid JSON only: { "rewritten_text": "YOUR REWRITTEN TEXT HERE" }
@@ -105,8 +105,8 @@ async function runDeepRewrite(text, customPrompt = null) {
 
     const finalPrompt = customPrompt || defaultPrompt;
 
-    // Use Temperature 1.4 for High Perplexity (Must be unpredictable)
-    const result = await runGeminiRewrite(text, finalPrompt, 1.4);
+    // Use Temperature 1.25 for sophisticated variance
+    const result = await runGeminiRewrite(text, finalPrompt, 1.25);
     logStage("   ✅", "Deep Rewrite Complete");
     return result;
 }
@@ -116,20 +116,21 @@ async function runDeepRewrite(text, customPrompt = null) {
 // --- REWRITE FLAGGED SENTENCES (Gemini Naturalizer) ---
 // --- REWRITE FLAGGED SENTENCES (Gemini Logic Inverter) ---
 // --- REWRITE FLAGGED SENTENCES (Gemini Deconstructor) ---
+// --- REWRITE FLAGGED SENTENCES (Gemini Academic Refiner) ---
 async function rewriteSpecificFlaggedParts(text, reason = "AI Detection") {
-    logStage("➡️ [Loop]", `🔥 Gemini → Deconstruction Rewrite (Reason: ${reason})...`);
+    logStage("➡️ [Loop]", `🔥 Gemini → Academic Refinement (Reason: ${reason})...`);
 
     const aggressivePrompt = `
-    ROLE: "The Breaker".
-    TASK: The text "flows" too well. It looks fake. Break the flow.
+    ROLE: Strict Academic Editor.
+    TASK: The text fits an "AI Pattern". Scramble the syntax but INCREASE the formality.
 
     TACTICS:
-    1.  **Insert Interruptions**: Add a thought inside dashes -- like this -- right in the middle of a sentence.
-    2.  **Kill the Passive Voice**: If something "is done", change it to "we did it".
-    3.  **Use "Power Verbs"**: Swap "walked" for "stomped". Swap "said" for "shouted".
-    4.  **The "So What?" Test**: After a fact, add a sentence explaining WHY it matters emotionally. "And that scares me."
+    1.  **Complex Syntax**: Combine two simple sentences into one complex structure using a semicolon or subordinate clause.
+    2.  **Inversion**: "The results showed..." -> "Of particular interest were the results..."
+    3.  **Precise Terminology**: Replace generic words with field-specific jargon (where appropriate) but AVOID AI clichés (delve, vital).
+    4.  **No Fluff**: Cut "It is important to note". Just state the fact.
 
-    GOAL: Make the reader feel something. AIs don't feel.
+    GOAL: Pass Turnitin as "High-Level Human Writing".
 
     STRICT OUTPUT FORMAT:
     Return valid JSON only: { "rewritten_text": "YOUR REWRITTEN TEXT HERE" }
@@ -138,7 +139,7 @@ async function rewriteSpecificFlaggedParts(text, reason = "AI Detection") {
     "${text}"
     `;
 
-    return runGeminiRewrite(text, aggressivePrompt, 1.5);
+    return runGeminiRewrite(text, aggressivePrompt, 1.35);
 }
 
 // Helper generic Gemini
