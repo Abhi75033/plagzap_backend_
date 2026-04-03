@@ -217,7 +217,7 @@ Generate the complete content now:
         console.log('🤖 Calling Gemini API via REST (v1beta with gemini-2.0-flash)');
 
         const response = await axios.post(
-            `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${process.env.GEMINI_API_KEY}`,
+            `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
             {
                 contents: [{
                     parts: [{
@@ -302,7 +302,7 @@ exports.generateFromPreset = async (req, res) => {
         const customizedPrompt = preset.prompt.replace(/{topic}/g, topic);
 
         const response = await axios.post(
-            `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${process.env.GEMINI_API_KEY}`,
+            `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
             {
                 contents: [{ parts: [{ text: customizedPrompt }] }],
                 generationConfig: {
